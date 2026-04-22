@@ -86,16 +86,49 @@
         .negative-margin { background: rgba(239,68,68,0.15); color: #ef4444; }
         .supplier-tag { font-size: 10px; background: rgba(59,130,246,0.2); padding: 4px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
         
-        /* Botões em grid de duas colunas */
+        /* Botões redondos em grid de duas colunas - centralizados e com tamanho fixo */
         .two-col-buttons {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 0.5rem;
+            gap: 0.75rem;
             margin-top: 0.5rem;
+            justify-items: center;
+            align-items: center;
         }
         .two-col-buttons button {
-            width: 100%;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
             justify-content: center;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #9ca3af;
+            transition: all 0.2s;
+            cursor: pointer;
+            padding: 0;
+        }
+        .two-col-buttons button i {
+            font-size: 1.25rem;
+        }
+        .two-col-buttons button:hover {
+            border-color: rgba(16, 185, 129, 0.5);
+            color: #10b981;
+            background: rgba(16, 185, 129, 0.15);
+            transform: scale(1.05);
+        }
+        .two-col-buttons button:active {
+            transform: scale(0.95);
+        }
+        .two-col-buttons .btn-director {
+            background: rgba(59, 130, 246, 0.25);
+            border-color: rgba(59, 130, 246, 0.4);
+            color: #60a5fa;
+        }
+        .two-col-buttons .btn-director:hover {
+            background: rgba(59, 130, 246, 0.4);
+            color: #93c5fd;
         }
         
         @media (max-width: 480px) {
@@ -103,9 +136,16 @@
             .qty-input { width: 55px; font-size: 12px; }
             .margin-badge { font-size: 9px; padding: 2px 6px; }
             .supplier-tag { font-size: 9px; }
+            .two-col-buttons button {
+                width: 42px;
+                height: 42px;
+            }
+            .two-col-buttons button i {
+                font-size: 1rem;
+            }
         }
         
-        /* Tema claro - valores pretos, margem colorida */
+        /* Tema claro */
         body.light-theme .qty-input,
         body.light-theme .price-input {
             color: #000000 !important;
@@ -157,13 +197,32 @@
         body.light-theme .text-gray-400 {
             color: #6b7280 !important;
         }
+        body.light-theme .two-col-buttons button {
+            background: rgba(0, 0, 0, 0.05);
+            border-color: rgba(0, 0, 0, 0.15);
+            color: #4b5563;
+        }
+        body.light-theme .two-col-buttons button:hover {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: #10b981;
+            color: #047857;
+        }
+        body.light-theme .two-col-buttons .btn-director {
+            background: rgba(37, 99, 235, 0.15);
+            border-color: rgba(37, 99, 235, 0.3);
+            color: #2563eb;
+        }
+        body.light-theme .two-col-buttons .btn-director:hover {
+            background: rgba(37, 99, 235, 0.25);
+            color: #1d4ed8;
+        }
     </style>
 </head>
 <body class="min-h-screen pb-44 antialiased">
 
 <header class="sticky top-0 z-50 backdrop-blur-2xl border-b border-white/10 shadow-lg" style="background: var(--header-bg);">
     <div class="app-container px-4 pt-5 pb-3">
-        <!-- Primeira linha: título + botões principais (inclui reset e modo gestão) -->
+        <!-- Primeira linha: título + botões principais (todos redondos) -->
         <div class="flex justify-between items-center flex-wrap gap-2">
             <div class="flex items-baseline gap-2">
                 <h1 class="text-3xl sm:text-4xl btn-primary px-3 py-1 rounded-2xl shadow-md brand-font tracking-wider">SMASH IT</h1>
@@ -175,42 +234,42 @@
                     <i class="fas fa-arrow-right-arrow-left text-sm sm:text-base"></i>
                 </button>
                 <!-- Botão tema -->
-                <button id="btn-theme-toggle" onclick="toggleTheme()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-300 border border-white/15">
+                <button id="btn-theme-toggle" onclick="toggleTheme()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-300 border border-white/15" title="Alternar tema claro/escuro">
                     <i id="theme-icon" class="fas fa-moon text-sm sm:text-base"></i>
                 </button>
                 <!-- Botão modo gestão (edição) -->
-                <button id="btn-edit-mode" onclick="toggleEditMode()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-300 border border-white/15">
+                <button id="btn-edit-mode" onclick="toggleEditMode()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-300 border border-white/15" title="Modo gestão (editar categorias/itens)">
                     <i class="fas fa-cog text-sm sm:text-base"></i>
                 </button>
-                <!-- Botões de reset (alinhados com modo gestão) -->
+                <!-- Botões de reset (redondos) -->
                 <button onclick="confirmClearPrices()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-amber-600/20 text-amber-400 border border-amber-500/40" title="Zerar preços e quantidades">
                     <i class="fas fa-eraser text-sm"></i>
                 </button>
-                <button onclick="confirmFullReset()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-red-600/20 text-red-400 border border-red-500/40" title="Redefinir tudo">
+                <button onclick="confirmFullReset()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-red-600/20 text-red-400 border border-red-500/40" title="Redefinir tudo (reset completo)">
                     <i class="fas fa-arrow-rotate-left text-sm"></i>
                 </button>
             </div>
         </div>
 
-        <!-- Segunda linha: outros botões organizados em duas colunas -->
+        <!-- Segunda linha: botões de ação - todos redondos, duas colunas -->
         <div class="two-col-buttons mt-2">
-            <button onclick="exportData()" class="w-full rounded-full bg-white/5 flex items-center justify-center gap-2 text-gray-300 border border-white/15 py-2 text-xs font-medium" title="Exportar dados">
-                <i class="fas fa-download text-sm"></i> Exportar
+            <button onclick="exportData()" title="Exportar dados (JSON)">
+                <i class="fas fa-download"></i>
             </button>
-            <button onclick="importData()" class="w-full rounded-full bg-white/5 flex items-center justify-center gap-2 text-gray-300 border border-white/15 py-2 text-xs font-medium" title="Importar dados">
-                <i class="fas fa-upload text-sm"></i> Importar
+            <button onclick="importData()" title="Importar dados (JSON)">
+                <i class="fas fa-upload"></i>
             </button>
-            <button onclick="openCalculator()" class="w-full rounded-full bg-white/5 flex items-center justify-center gap-2 text-gray-300 border border-white/15 py-2 text-xs font-medium" title="Calculadora">
-                <i class="fas fa-calculator text-sm"></i> Calculadora
+            <button onclick="openCalculator()" title="Calculadora">
+                <i class="fas fa-calculator"></i>
             </button>
-            <button onclick="openSuppliersModal()" class="w-full rounded-full bg-white/5 flex items-center justify-center gap-2 text-gray-300 border border-white/15 py-2 text-xs font-medium" title="Fornecedores">
-                <i class="fas fa-truck text-sm"></i> Fornecedores
+            <button onclick="openSuppliersModal()" title="Fornecedores">
+                <i class="fas fa-truck"></i>
             </button>
-            <button onclick="generateAndSendPDF()" class="w-full rounded-full bg-white/5 flex items-center justify-center gap-2 text-gray-300 border border-white/15 py-2 text-xs font-medium" title="Gerar PDF">
-                <i class="fas fa-file-pdf text-sm"></i> PDF
+            <button onclick="generateAndSendPDF()" title="Gerar PDF">
+                <i class="fas fa-file-pdf"></i>
             </button>
-            <button onclick="sendDirectorReport()" class="w-full rounded-full bg-blue-600/30 flex items-center justify-center gap-2 text-blue-400 border border-blue-500/40 py-2 text-xs font-medium" title="Relatório para Diretoria">
-                <i class="fas fa-chart-line text-sm"></i> Diretoria
+            <button class="btn-director" onclick="sendDirectorReport()" title="Relatório para Diretoria">
+                <i class="fas fa-chart-line"></i>
             </button>
         </div>
 
