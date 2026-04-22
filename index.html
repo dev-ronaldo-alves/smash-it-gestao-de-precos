@@ -64,25 +64,6 @@
             .app-container { max-width: 1024px; }
         }
         
-        @media (min-width: 768px) {
-            .inventory-grid {
-                display: flex;
-                flex-direction: column;
-                gap: 1.5rem;
-            }
-            .item-card .fields-row {
-                flex-wrap: nowrap;
-                justify-content: space-between;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            .price-input { width: 70px; font-size: 12px; }
-            .qty-input { width: 55px; font-size: 12px; }
-            .margin-badge { font-size: 9px; padding: 2px 6px; }
-            .supplier-tag { font-size: 9px; }
-        }
-        
         .brand-font { font-family: 'Bangers', cursive; letter-spacing: 2px; text-shadow: 0 2px 0 rgba(0,0,0,0.3); }
         .card-glass { background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid var(--card-border); transition: all 0.2s; }
         .card-glass:hover { border-color: rgba(16, 185, 129, 0.4); }
@@ -103,20 +84,27 @@
         .qty-input { width: 65px; text-align: center; font-weight: 600; }
         .margin-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; background: rgba(16,185,129,0.15); color: #10b981; white-space: nowrap; }
         .negative-margin { background: rgba(239,68,68,0.15); color: #ef4444; }
-        .reset-buttons-row { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 0.5rem; }
         .supplier-tag { font-size: 10px; background: rgba(59,130,246,0.2); padding: 4px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
         
-        @media (max-width: 500px) {
-            .header-actions {
-                flex-wrap: wrap;
-                justify-content: flex-end;
-                gap: 0.5rem;
-            }
-            .reset-buttons-row {
-                justify-content: flex-end;
-            }
+        /* Botões em grid de duas colunas */
+        .two-col-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.5rem;
+            margin-top: 0.5rem;
         }
-
+        .two-col-buttons button {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        @media (max-width: 480px) {
+            .price-input { width: 70px; font-size: 12px; }
+            .qty-input { width: 55px; font-size: 12px; }
+            .margin-badge { font-size: 9px; padding: 2px 6px; }
+            .supplier-tag { font-size: 9px; }
+        }
+        
         /* Tema claro - valores pretos, margem colorida */
         body.light-theme .qty-input,
         body.light-theme .price-input {
@@ -175,30 +163,58 @@
 
 <header class="sticky top-0 z-50 backdrop-blur-2xl border-b border-white/10 shadow-lg" style="background: var(--header-bg);">
     <div class="app-container px-4 pt-5 pb-3">
-        <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
+        <!-- Primeira linha: título + botões principais (inclui reset e modo gestão) -->
+        <div class="flex justify-between items-center flex-wrap gap-2">
             <div class="flex items-baseline gap-2">
                 <h1 class="text-3xl sm:text-4xl btn-primary px-3 py-1 rounded-2xl shadow-md brand-font tracking-wider">SMASH IT</h1>
                 <span class="text-[10px] font-bold text-emerald-500/80 uppercase">gestão, orçamento, fornecedores</span>
             </div>
-            <div class="flex gap-2 flex-wrap header-actions">
-                <!-- Botão para alternar para o app de Contagem (Stock) -->
+            <div class="flex gap-2 items-center">
+                <!-- Botão alternar app -->
                 <button onclick="switchToCounterApp()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-300 border border-white/15 transition-all duration-300 hover:border-emerald-500/50" title="Alternar para Contagem de Stock">
                     <i class="fas fa-arrow-right-arrow-left text-sm sm:text-base"></i>
                 </button>
-                <button onclick="exportData()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-300 border border-white/15" title="Exportar dados"><i class="fas fa-download text-sm sm:text-base"></i></button>
-                <button onclick="importData()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-300 border border-white/15" title="Importar dados"><i class="fas fa-upload text-sm sm:text-base"></i></button>
-                <button onclick="openCalculator()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-300 border border-white/15" title="Calculadora"><i class="fas fa-calculator text-sm sm:text-base"></i></button>
-                <button onclick="openSuppliersModal()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-300 border border-white/15" title="Fornecedores"><i class="fas fa-truck text-sm sm:text-base"></i></button>
-                <button onclick="generateAndSendPDF()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-300 border border-white/15" title="Gerar PDF"><i class="fas fa-file-pdf text-sm sm:text-base"></i></button>
-                <button onclick="sendDirectorReport()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-blue-600/30 flex items-center justify-center text-blue-400 border border-blue-500/40" title="Relatório para Diretoria"><i class="fas fa-chart-line text-sm sm:text-base"></i></button>
-                <button id="btn-theme-toggle" onclick="toggleTheme()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-300 border border-white/15"><i id="theme-icon" class="fas fa-moon text-sm sm:text-base"></i></button>
-                <button id="btn-edit-mode" onclick="toggleEditMode()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-300 border border-white/15"><i class="fas fa-cog text-sm sm:text-base"></i></button>
+                <!-- Botão tema -->
+                <button id="btn-theme-toggle" onclick="toggleTheme()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-300 border border-white/15">
+                    <i id="theme-icon" class="fas fa-moon text-sm sm:text-base"></i>
+                </button>
+                <!-- Botão modo gestão (edição) -->
+                <button id="btn-edit-mode" onclick="toggleEditMode()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-300 border border-white/15">
+                    <i class="fas fa-cog text-sm sm:text-base"></i>
+                </button>
+                <!-- Botões de reset (alinhados com modo gestão) -->
+                <button onclick="confirmClearPrices()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-amber-600/20 text-amber-400 border border-amber-500/40" title="Zerar preços e quantidades">
+                    <i class="fas fa-eraser text-sm"></i>
+                </button>
+                <button onclick="confirmFullReset()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-red-600/20 text-red-400 border border-red-500/40" title="Redefinir tudo">
+                    <i class="fas fa-arrow-rotate-left text-sm"></i>
+                </button>
             </div>
         </div>
-        <div class="reset-buttons-row">
-            <button onclick="confirmClearPrices()" class="w-10 h-10 rounded-full bg-amber-600/20 text-amber-400 border border-amber-500/40" title="Zerar preços e quantidades"><i class="fas fa-eraser text-sm"></i></button>
-            <button onclick="confirmFullReset()" class="w-10 h-10 rounded-full bg-red-600/20 text-red-400 border border-red-500/40" title="Redefinir tudo"><i class="fas fa-arrow-rotate-left text-sm"></i></button>
+
+        <!-- Segunda linha: outros botões organizados em duas colunas -->
+        <div class="two-col-buttons mt-2">
+            <button onclick="exportData()" class="w-full rounded-full bg-white/5 flex items-center justify-center gap-2 text-gray-300 border border-white/15 py-2 text-xs font-medium" title="Exportar dados">
+                <i class="fas fa-download text-sm"></i> Exportar
+            </button>
+            <button onclick="importData()" class="w-full rounded-full bg-white/5 flex items-center justify-center gap-2 text-gray-300 border border-white/15 py-2 text-xs font-medium" title="Importar dados">
+                <i class="fas fa-upload text-sm"></i> Importar
+            </button>
+            <button onclick="openCalculator()" class="w-full rounded-full bg-white/5 flex items-center justify-center gap-2 text-gray-300 border border-white/15 py-2 text-xs font-medium" title="Calculadora">
+                <i class="fas fa-calculator text-sm"></i> Calculadora
+            </button>
+            <button onclick="openSuppliersModal()" class="w-full rounded-full bg-white/5 flex items-center justify-center gap-2 text-gray-300 border border-white/15 py-2 text-xs font-medium" title="Fornecedores">
+                <i class="fas fa-truck text-sm"></i> Fornecedores
+            </button>
+            <button onclick="generateAndSendPDF()" class="w-full rounded-full bg-white/5 flex items-center justify-center gap-2 text-gray-300 border border-white/15 py-2 text-xs font-medium" title="Gerar PDF">
+                <i class="fas fa-file-pdf text-sm"></i> PDF
+            </button>
+            <button onclick="sendDirectorReport()" class="w-full rounded-full bg-blue-600/30 flex items-center justify-center gap-2 text-blue-400 border border-blue-500/40 py-2 text-xs font-medium" title="Relatório para Diretoria">
+                <i class="fas fa-chart-line text-sm"></i> Diretoria
+            </button>
         </div>
+
+        <!-- Barra de pesquisa -->
         <div class="relative mt-3">
             <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-500 text-sm"></i>
             <input type="text" id="search-input" oninput="render()" placeholder="🔎 Pesquisar item ou categoria..." class="w-full bg-white/5 border border-white/10 h-12 pl-12 pr-5 rounded-2xl outline-none text-sm focus:border-emerald-500" style="background: var(--input-bg); border-color: var(--input-border); color: var(--text-primary);">
@@ -290,7 +306,6 @@
     let isEditMode = false;
     let suppliers = [];
 
-    // ---------- ARMAZENAMENTO ----------
     function loadData() {
         let stored = localStorage.getItem('smash_prices_full');
         if (stored) {
@@ -304,7 +319,6 @@
         localStorage.setItem('smash_suppliers', JSON.stringify(suppliers));
         if (window.broadcastChannel) window.broadcastChannel.postMessage({ type: 'DATA_UPDATED' });
     }
-    function saveSuppliers() { persistData(); }
     function saveNotes() { localStorage.setItem('smash_notes_prices', document.getElementById('notes').value); }
     function loadNotes() { let n = localStorage.getItem('smash_notes_prices'); if(n !== null) document.getElementById('notes').value = n; }
 
@@ -349,15 +363,6 @@
         input.click();
     }
 
-    function setupBroadcast() {
-        if (window.BroadcastChannel) {
-            window.broadcastChannel = new BroadcastChannel('smash_sync');
-            window.broadcastChannel.onmessage = (event) => {
-                if (event.data.type === 'DATA_UPDATED') { loadData(); render(); }
-            };
-        }
-    }
-
     function toggleEditMode() {
         isEditMode = !isEditMode;
         document.getElementById('btn-edit-mode').classList.toggle('edit-active');
@@ -395,8 +400,6 @@
                 const itemEyeIcon = item.visible ? 'fa-eye' : 'fa-eye-slash';
                 const supplierName = getSupplierName(item.supplierId);
                 const supplierPrice = getSupplierPrice(item.supplierId);
-                
-                // Construção da tag de fornecedor com botão "Associar" sempre visível se não associado
                 let supplierHtml = `<div class="supplier-tag"><i class="fas fa-truck text-[9px]"></i>`;
                 if (item.supplierId === null) {
                     supplierHtml += `<span>Não associado</span>
@@ -408,7 +411,6 @@
                     }
                 }
                 supplierHtml += `</div>`;
-                
                 itemsHtml += `
                     <div class="card-glass p-3 rounded-2xl">
                         <div class="flex flex-col sm:flex-row sm:items-center gap-2">
@@ -650,13 +652,11 @@
     function toggleTheme() { document.body.classList.toggle('light-theme'); let icon=document.getElementById('theme-icon'); let isLight=document.body.classList.contains('light-theme'); icon.className=isLight?'fas fa-sun text-base':'fas fa-moon text-base'; localStorage.setItem('smash_theme_prices',isLight?'light':'dark'); }
     function loadTheme() { let saved=localStorage.getItem('smash_theme_prices'); if(saved==='light'){ document.body.classList.add('light-theme'); document.getElementById('theme-icon').className='fas fa-sun text-base'; } }
 
-    // ---------- BOTÃO PARA ALTERNAR PARA O APP DE CONTAGEM (STOCK) ----------
     function switchToCounterApp() {
         window.location.href = "https://dev-ronaldo-alves.github.io/smash-it-pro-contagem/";
     }
-    // ----------------------------------------------------------------
 
-    loadData(); loadTheme(); loadNotes(); setupBroadcast();
+    loadData(); loadTheme(); loadNotes();
     window.onload = () => { render(); };
     window.addEventListener('storage', (e) => { if(e.key==='smash_prices_full' || e.key==='smash_suppliers'){ loadData(); render(); } });
 </script>
