@@ -86,18 +86,17 @@
         .negative-margin { background: rgba(239,68,68,0.15); color: #ef4444; }
         .supplier-tag { font-size: 10px; background: rgba(59,130,246,0.2); padding: 4px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
         
-        /* Botões redondos em grid de duas colunas - centralizados e com tamanho fixo */
-        .two-col-buttons {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+        /* Duas linhas horizontais de botões redondos */
+        .button-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
             gap: 0.75rem;
-            margin-top: 0.5rem;
-            justify-items: center;
-            align-items: center;
+            margin: 0.5rem 0;
         }
-        .two-col-buttons button {
-            width: 48px;
-            height: 48px;
+        .button-row button {
+            width: 52px;
+            height: 52px;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -109,26 +108,36 @@
             cursor: pointer;
             padding: 0;
         }
-        .two-col-buttons button i {
+        .button-row button i {
             font-size: 1.25rem;
         }
-        .two-col-buttons button:hover {
+        .button-row button:hover {
             border-color: rgba(16, 185, 129, 0.5);
             color: #10b981;
             background: rgba(16, 185, 129, 0.15);
             transform: scale(1.05);
         }
-        .two-col-buttons button:active {
+        .button-row button:active {
             transform: scale(0.95);
         }
-        .two-col-buttons .btn-director {
+        .btn-director {
             background: rgba(59, 130, 246, 0.25);
             border-color: rgba(59, 130, 246, 0.4);
             color: #60a5fa;
         }
-        .two-col-buttons .btn-director:hover {
+        .btn-director:hover {
             background: rgba(59, 130, 246, 0.4);
             color: #93c5fd;
+        }
+        .btn-reset-amber {
+            background: rgba(245, 158, 11, 0.2);
+            border-color: rgba(245, 158, 11, 0.4);
+            color: #fbbf24;
+        }
+        .btn-reset-red {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.4);
+            color: #f87171;
         }
         
         @media (max-width: 480px) {
@@ -136,12 +145,15 @@
             .qty-input { width: 55px; font-size: 12px; }
             .margin-badge { font-size: 9px; padding: 2px 6px; }
             .supplier-tag { font-size: 9px; }
-            .two-col-buttons button {
-                width: 42px;
-                height: 42px;
+            .button-row button {
+                width: 44px;
+                height: 44px;
             }
-            .two-col-buttons button i {
+            .button-row button i {
                 font-size: 1rem;
+            }
+            .button-row {
+                gap: 0.5rem;
             }
         }
         
@@ -197,24 +209,34 @@
         body.light-theme .text-gray-400 {
             color: #6b7280 !important;
         }
-        body.light-theme .two-col-buttons button {
+        body.light-theme .button-row button {
             background: rgba(0, 0, 0, 0.05);
             border-color: rgba(0, 0, 0, 0.15);
             color: #4b5563;
         }
-        body.light-theme .two-col-buttons button:hover {
+        body.light-theme .button-row button:hover {
             background: rgba(16, 185, 129, 0.15);
             border-color: #10b981;
             color: #047857;
         }
-        body.light-theme .two-col-buttons .btn-director {
+        body.light-theme .btn-director {
             background: rgba(37, 99, 235, 0.15);
             border-color: rgba(37, 99, 235, 0.3);
             color: #2563eb;
         }
-        body.light-theme .two-col-buttons .btn-director:hover {
+        body.light-theme .btn-director:hover {
             background: rgba(37, 99, 235, 0.25);
             color: #1d4ed8;
+        }
+        body.light-theme .btn-reset-amber {
+            background: rgba(245, 158, 11, 0.15);
+            border-color: rgba(245, 158, 11, 0.3);
+            color: #d97706;
+        }
+        body.light-theme .btn-reset-red {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #dc2626;
         }
     </style>
 </head>
@@ -222,37 +244,35 @@
 
 <header class="sticky top-0 z-50 backdrop-blur-2xl border-b border-white/10 shadow-lg" style="background: var(--header-bg);">
     <div class="app-container px-4 pt-5 pb-3">
-        <!-- Primeira linha: título + botões principais (todos redondos) -->
+        <!-- Título -->
         <div class="flex justify-between items-center flex-wrap gap-2">
             <div class="flex items-baseline gap-2">
                 <h1 class="text-3xl sm:text-4xl btn-primary px-3 py-1 rounded-2xl shadow-md brand-font tracking-wider">SMASH IT</h1>
                 <span class="text-[10px] font-bold text-emerald-500/80 uppercase">gestão, orçamento, fornecedores</span>
             </div>
-            <div class="flex gap-2 items-center">
-                <!-- Botão alternar app -->
-                <button onclick="switchToCounterApp()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-300 border border-white/15 transition-all duration-300 hover:border-emerald-500/50" title="Alternar para Contagem de Stock">
-                    <i class="fas fa-arrow-right-arrow-left text-sm sm:text-base"></i>
-                </button>
-                <!-- Botão tema -->
-                <button id="btn-theme-toggle" onclick="toggleTheme()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-300 border border-white/15" title="Alternar tema claro/escuro">
-                    <i id="theme-icon" class="fas fa-moon text-sm sm:text-base"></i>
-                </button>
-                <!-- Botão modo gestão (edição) -->
-                <button id="btn-edit-mode" onclick="toggleEditMode()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-300 border border-white/15" title="Modo gestão (editar categorias/itens)">
-                    <i class="fas fa-cog text-sm sm:text-base"></i>
-                </button>
-                <!-- Botões de reset (redondos) -->
-                <button onclick="confirmClearPrices()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-amber-600/20 text-amber-400 border border-amber-500/40" title="Zerar preços e quantidades">
-                    <i class="fas fa-eraser text-sm"></i>
-                </button>
-                <button onclick="confirmFullReset()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-red-600/20 text-red-400 border border-red-500/40" title="Redefinir tudo (reset completo)">
-                    <i class="fas fa-arrow-rotate-left text-sm"></i>
-                </button>
-            </div>
         </div>
 
-        <!-- Segunda linha: botões de ação - todos redondos, duas colunas -->
-        <div class="two-col-buttons mt-2">
+        <!-- PRIMEIRA LINHA HORIZONTAL DE BOTÕES -->
+        <div class="button-row">
+            <button onclick="switchToCounterApp()" title="Alternar para Contagem de Stock">
+                <i class="fas fa-arrow-right-arrow-left"></i>
+            </button>
+            <button id="btn-theme-toggle" onclick="toggleTheme()" title="Alternar tema claro/escuro">
+                <i id="theme-icon" class="fas fa-moon"></i>
+            </button>
+            <button id="btn-edit-mode" onclick="toggleEditMode()" title="Modo gestão (editar categorias/itens)">
+                <i class="fas fa-cog"></i>
+            </button>
+            <button onclick="confirmClearPrices()" class="btn-reset-amber" title="Zerar preços e quantidades">
+                <i class="fas fa-eraser"></i>
+            </button>
+            <button onclick="confirmFullReset()" class="btn-reset-red" title="Redefinir tudo (reset completo)">
+                <i class="fas fa-arrow-rotate-left"></i>
+            </button>
+        </div>
+
+        <!-- SEGUNDA LINHA HORIZONTAL DE BOTÕES -->
+        <div class="button-row">
             <button onclick="exportData()" title="Exportar dados (JSON)">
                 <i class="fas fa-download"></i>
             </button>
