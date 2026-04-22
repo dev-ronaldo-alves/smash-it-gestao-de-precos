@@ -181,6 +181,10 @@
                 <span class="text-[10px] font-bold text-emerald-500/80 uppercase">gestão, orçamento, fornecedores</span>
             </div>
             <div class="flex gap-2 flex-wrap header-actions">
+                <!-- Botão para alternar para o app de Contagem (Stock) -->
+                <button onclick="switchToCounterApp()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-300 border border-white/15 transition-all duration-300 hover:border-emerald-500/50" title="Alternar para Contagem de Stock">
+                    <i class="fas fa-arrow-right-arrow-left text-sm sm:text-base"></i>
+                </button>
                 <button onclick="exportData()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-300 border border-white/15" title="Exportar dados"><i class="fas fa-download text-sm sm:text-base"></i></button>
                 <button onclick="importData()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-300 border border-white/15" title="Importar dados"><i class="fas fa-upload text-sm sm:text-base"></i></button>
                 <button onclick="openCalculator()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-300 border border-white/15" title="Calculadora"><i class="fas fa-calculator text-sm sm:text-base"></i></button>
@@ -645,6 +649,12 @@
 
     function toggleTheme() { document.body.classList.toggle('light-theme'); let icon=document.getElementById('theme-icon'); let isLight=document.body.classList.contains('light-theme'); icon.className=isLight?'fas fa-sun text-base':'fas fa-moon text-base'; localStorage.setItem('smash_theme_prices',isLight?'light':'dark'); }
     function loadTheme() { let saved=localStorage.getItem('smash_theme_prices'); if(saved==='light'){ document.body.classList.add('light-theme'); document.getElementById('theme-icon').className='fas fa-sun text-base'; } }
+
+    // ---------- BOTÃO PARA ALTERNAR PARA O APP DE CONTAGEM (STOCK) ----------
+    function switchToCounterApp() {
+        window.location.href = "https://dev-ronaldo-alves.github.io/smash-it-pro-contagem/";
+    }
+    // ----------------------------------------------------------------
 
     loadData(); loadTheme(); loadNotes(); setupBroadcast();
     window.onload = () => { render(); };
