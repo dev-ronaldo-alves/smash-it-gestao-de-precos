@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="pt-pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <link rel="icon" type="image/svg+xml" href="https://emojicdn.elk.sh/💰">
+    <title>Smash It - Gestão | Preços, Fornecedores, Relatórios</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;500;600;700;800&display=swap');
+        
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        
+        :root {
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --bg-gradient-start: #0b0b0b;
+            --bg-gradient-end: #000000;
+            --text-primary: #f1f5f9;
+            --card-bg: rgba(15, 15, 20, 0.7);
+            --card-border: rgba(255, 255, 255, 0.06);
+            --input-bg: rgba(0, 0, 0, 0.4);
+            --input-border: rgba(255, 255, 255, 0.1);
+            --header-bg: rgba(0, 0, 0, 0.9);
+            --footer-gradient: linear-gradient(to top, black, rgba(0,0,0,0.95), transparent);
+            --modal-bg: rgba(0, 0, 0, 0.92);
+        }
+        
+        body.light-theme {
+            --bg-gradient-start: #fef9e8;
+            --bg-gradient-end: #fff4e0;
+            --text-primary: #1e1b1a;
+            --card-bg: rgba(255, 248, 235, 0.85);
+            --card-border: rgba(0, 0, 0, 0.1);
+            --input-bg: rgba(0, 0, 0, 0.05);
+            --input-border: rgba(0, 0, 0, 0.15);
+            --header-bg: rgba(255, 248, 235, 0.95);
+            --footer-gradient: linear-gradient(to top, #fff4e0, rgba(255,244,224,0.95), transparent);
+            --modal-bg: rgba(255, 248, 235, 0.98);
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at 10% 20%, var(--bg-gradient-start), var(--bg-gradient-end));
+            color: var(--text-primary);
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+        
+        .app-container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+        
+        @media (min-width: 640px) {
+            .app-container { max-width: 640px; }
+        }
+        @media (min-width: 768px) {
+            .app-container { max-width: 768px; }
+        }
+        @media (min-width: 1024px) {
+            .app-container { max-width: 1024px; }
+        }
+        
+        @media (min-width: 768px) {
+            .inventory-grid {
+                display: flex;
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+            .item-card .fields-row {
+                flex-wrap: nowrap;
+                justify-content: space-between;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .price-input { width: 70px; font-size: 12px; }
+            .qty-input { width: 55px; font-size: 12px; }
+            .margin-badge { font-size: 9px; padding: 2px 6px; }
+            .supplier-tag { font-size: 9px; }
+        }
+        
+        .brand-font { font-family: 'Bangers', cursive; letter-spacing: 2px; text-shadow: 0 2px 0 rgba(0,0,0,0.3); }
+        .card-glass { background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid var(--card-border); transition: all 0.2s; }
+        .card-glass:hover { border-color: rgba(16, 185, 129, 0.4); }
+        .btn-primary { background: linear-gradient(105deg, #10b981 0%, #059669 100%); color: white; font-weight: 800; transition: transform 0.15s; box-shadow: 0 8px 20px -6px rgba(16, 185, 129, 0.2); }
+        .btn-primary:active { transform: scale(0.97); }
+        .btn-secondary { background: linear-gradient(105deg, #3b82f6 0%, #2563eb 100%); color: white; font-weight: 800; }
+        .modal { display: none; position: fixed; inset: 0; background: var(--modal-bg); backdrop-filter: blur(10px); z-index: 200; align-items: center; justify-content: center; }
+        .modal.active { display: flex; animation: modalFade 0.25s ease-out; }
+        @keyframes modalFade { from { opacity: 0; backdrop-filter: blur(0px);} to { opacity: 1; backdrop-filter: blur(10px);} }
+        .animate-in { animation: slideUp 0.3s ease-out forwards; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+        .edit-active { background: #10b981 !important; color: white !important; transform: rotate(90deg); }
+        .eye-btn { transition: all 0.1s; cursor: pointer; opacity: 0.7; }
+        .eye-btn:hover { opacity: 1; transform: scale(1.05); }
+        .price-input { width: 85px; text-align: center; font-weight: 600; }
+        .qty-input { width: 65px; text-align: center; font-weight: 600; }
+        .margin-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; background: rgba(16,185,129,0.15); color: #10b981; white-space: nowrap; }
+        .negative-margin { background: rgba(239,68,68,0.15); color: #ef4444; }
+        .reset-buttons-row { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 0.5rem; }
+        .supplier-tag { font-size: 10px; background: rgba(59,130,246,0.2); padding: 2px 8px; border-radius: 12px; display: inline-block; margin-top: 4px; white-space: nowrap; overflow-x: auto; max-width: 100%; }
+        
+        @media (max-width: 500px) {
+            .header-actions {
+                flex-wrap: wrap;
+                justify-content: flex-end;
+                gap: 0.5rem;
+            }
+            .reset-buttons-row {
+                justify-content: flex-end;
+            }
+        }
+
+        /* Tema claro - valores pretos, margem colorida */
+        body.light-theme .qty-input,
+        body.light-theme .price-input {
+            color: #000000 !important;
+            font-weight: 700;
+            background: rgba(0, 0, 0, 0.05) !important;
+        }
+        body.light-theme .margin-badge {
+            background: rgba(16, 185, 129, 0.15) !important;
+            color: #10b981 !important;
+        }
+        body.light-theme .negative-margin {
+            background: rgba(239, 68, 68, 0.15) !important;
+            color: #ef4444 !important;
+        }
+        body.light-theme .supplier-tag {
+            background: rgba(0, 0, 0, 0.08) !important;
+            color: #374151 !important;
+        }
+        body.light-theme .text-emerald-400,
+        body.light-theme .text-emerald-500,
+        body.light-theme .text-emerald-500\/70 {
+            color: #000000 !important;
+        }
+        body.light-theme .bg-emerald-500\/20 {
+            background-color: rgba(0, 0, 0, 0.05) !important;
+        }
+        body.light-theme .border-emerald-500\/40 {
+            border-color: rgba(0, 0, 0, 0.15) !important;
+        }
+        body.light-theme .btn-primary {
+            background: linear-gradient(105deg, #1f2937 0%, #111827 100%) !important;
+            color: white !important;
+        }
+        body.light-theme .btn-secondary {
+            background: linear-gradient(105deg, #3b82f6 0%, #2563eb 100%) !important;
+        }
+        body.light-theme .card-glass:hover {
+            border-color: rgba(0, 0, 0, 0.25) !important;
+        }
+        body.light-theme .focus\:border-emerald-500:focus {
+            border-color: #000000 !important;
+        }
+        body.light-theme .focus\:ring-emerald-500\/50:focus {
+            --tw-ring-color: rgba(0, 0, 0, 0.3) !important;
+        }
+        body.light-theme input[type="number"] {
+            color: #000000 !important;
+        }
+        body.light-theme .text-gray-400 {
+            color: #6b7280 !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-44 antialiased">
+
+<header class="sticky top-0 z-50 backdrop-blur-2xl border-b border-white/10 shadow-lg" style="background: var(--header-bg);">
+    <div class="app-container px-4 pt-5 pb-3">
+        <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
+            <div class="flex items-baseline gap-2">
+                <h1 class="text-3xl sm:text-4xl btn-primary px-3 py-1 rounded-2xl shadow-md brand-font tracking-wider">SMASH IT</h1>
+                <span class="text-[10px] font-bold text-emerald-500/80 uppercase">gestão</span>
+            </div>
+            <div class="flex gap-2 flex-wrap header-actions">
+                <button onclick="exportData()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-300 border border-white/15" title="Exportar dados"><i class="fas fa-download text-sm sm:text-base"></i></button>
+                <button onclick="importData()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-300 border border-white/15" title="Importar dados"><i class="fas fa-upload text-sm sm:text-base"></i></button>
+                <button onclick="openCalculator()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-300 border border-white/15" title="Calculadora"><i class="fas fa-calculator text-sm sm:text-base"></i></button>
+                <button onclick="openSuppliersModal()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-300 border border-white/15" title="Fornecedores"><i class="fas fa-truck text-sm sm:text-base"></i></button>
+                <button onclick="generateAndSendPDF()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-300 border border-white/15" title="Gerar PDF"><i class="fas fa-file-pdf text-sm sm:text-base"></i></button>
+                <button onclick="sendDirectorReport()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-blue-600/30 flex items-center justify-center text-blue-400 border border-blue-500/40" title="Relatório para Diretoria"><i class="fas fa-chart-line text-sm sm:text-base"></i></button>
+                <button id="btn-theme-toggle" onclick="toggleTheme()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-300 border border-white/15"><i id="theme-icon" class="fas fa-moon text-sm sm:text-base"></i></button>
+                <button id="btn-edit-mode" onclick="toggleEditMode()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-300 border border-white/15"><i class="fas fa-cog text-sm sm:text-base"></i></button>
+            </div>
+        </div>
+        <div class="reset-buttons-row">
+            <button onclick="confirmClearPrices()" class="w-10 h-10 rounded-full bg-amber-600/20 text-amber-400 border border-amber-500/40" title="Zerar preços e quantidades"><i class="fas fa-eraser text-sm"></i></button>
+            <button onclick="confirmFullReset()" class="w-10 h-10 rounded-full bg-red-600/20 text-red-400 border border-red-500/40" title="Redefinir tudo"><i class="fas fa-arrow-rotate-left text-sm"></i></button>
+        </div>
+        <div class="relative mt-3">
+            <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-500 text-sm"></i>
+            <input type="text" id="search-input" oninput="render()" placeholder="🔎 Pesquisar item ou categoria..." class="w-full bg-white/5 border border-white/10 h-12 pl-12 pr-5 rounded-2xl outline-none text-sm focus:border-emerald-500" style="background: var(--input-bg); border-color: var(--input-border); color: var(--text-primary);">
+        </div>
+    </div>
+</header>
+
+<main class="app-container px-4 py-5 space-y-8">
+    <div id="management-zone" class="hidden animate-in bg-emerald-500/5 border border-emerald-500/25 rounded-3xl p-5">
+        <div class="flex items-center gap-2 mb-3"><i class="fas fa-screwdriver-wrench text-emerald-400"></i><h3 class="text-emerald-400 text-[11px] font-black uppercase">Modo Gestão</h3></div>
+        <button onclick="openCategoryModal()" class="w-full bg-emerald-500 text-white font-extrabold py-3.5 rounded-xl text-xs uppercase flex items-center justify-center gap-2"><i class="fas fa-layer-group"></i> Criar nova categoria</button>
+    </div>
+    <div id="inventory-container" class="space-y-8"></div>
+    <div class="card-glass rounded-3xl p-5">
+        <div class="flex items-center gap-3 mb-3"><div class="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center"><i class="fas fa-sticky-note text-emerald-400 text-[11px]"></i></div><label class="font-bold uppercase text-[10px] tracking-[0.2em] text-gray-400">Observações / Orçamento</label></div>
+        <textarea id="notes" rows="3" oninput="saveNotes()" class="w-full bg-black/40 border border-white/10 rounded-2xl p-4 focus:border-emerald-500/60 outline-none text-sm resize-none" style="background: var(--input-bg); border-color: var(--input-border); color: var(--text-primary);" placeholder="📝 Notas sobre preços, fornecedores, promoções..."></textarea>
+    </div>
+</main>
+
+<div class="fixed bottom-0 left-0 w-full p-4 sm:p-5 bg-gradient-to-t from-black via-black/95 to-transparent z-40" style="background: var(--footer-gradient);">
+    <div class="app-container flex gap-3">
+        <button onclick="sendWhatsAppReport()" class="flex-1 btn-primary font-bold h-12 sm:h-14 rounded-2xl text-[11px] sm:text-xs uppercase flex items-center justify-center gap-2"><i class="fab fa-whatsapp text-base sm:text-lg"></i> ENVIAR RESUMO</button>
+        <button onclick="sendDirectorReport()" class="flex-1 btn-secondary font-bold h-12 sm:h-14 rounded-2xl text-[11px] sm:text-xs uppercase flex items-center justify-center gap-2"><i class="fas fa-chart-line text-base sm:text-lg"></i> RELATÓRIO DIRETORIA</button>
+    </div>
+</div>
+
+<!-- Modal Calculadora -->
+<div id="calculator-modal" class="modal px-5">
+    <div class="card-glass p-6 rounded-[2.5rem] w-full max-w-sm">
+        <div class="text-center mb-4"><h3 class="text-2xl font-black text-emerald-500 brand-font">Calculadora</h3></div>
+        <input type="text" id="calc-display" readonly class="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-right text-2xl font-bold mb-4" style="color: var(--text-primary);">
+        <div class="grid grid-cols-4 gap-2">
+            <button onclick="calcAppend('7')" class="bg-white/10 p-3 rounded-xl font-bold">7</button><button onclick="calcAppend('8')" class="bg-white/10 p-3 rounded-xl font-bold">8</button><button onclick="calcAppend('9')" class="bg-white/10 p-3 rounded-xl font-bold">9</button><button onclick="calcAppend('/')" class="bg-emerald-500/20 p-3 rounded-xl font-bold">÷</button>
+            <button onclick="calcAppend('4')" class="bg-white/10 p-3 rounded-xl font-bold">4</button><button onclick="calcAppend('5')" class="bg-white/10 p-3 rounded-xl font-bold">5</button><button onclick="calcAppend('6')" class="bg-white/10 p-3 rounded-xl font-bold">6</button><button onclick="calcAppend('*')" class="bg-emerald-500/20 p-3 rounded-xl font-bold">×</button>
+            <button onclick="calcAppend('1')" class="bg-white/10 p-3 rounded-xl font-bold">1</button><button onclick="calcAppend('2')" class="bg-white/10 p-3 rounded-xl font-bold">2</button><button onclick="calcAppend('3')" class="bg-white/10 p-3 rounded-xl font-bold">3</button><button onclick="calcAppend('-')" class="bg-emerald-500/20 p-3 rounded-xl font-bold">-</button>
+            <button onclick="calcAppend('0')" class="bg-white/10 p-3 rounded-xl font-bold">0</button><button onclick="calcAppend('.')" class="bg-white/10 p-3 rounded-xl font-bold">.</button><button onclick="calcResult()" class="bg-emerald-500 p-3 rounded-xl font-bold text-black">=</button><button onclick="calcAppend('+')" class="bg-emerald-500/20 p-3 rounded-xl font-bold">+</button>
+            <button onclick="calcClear()" class="col-span-2 bg-red-500/30 p-3 rounded-xl font-bold">C</button><button onclick="calcBackspace()" class="col-span-2 bg-amber-500/30 p-3 rounded-xl font-bold">⌫</button>
+        </div>
+        <button onclick="closeCalculator()" class="w-full mt-4 bg-white/10 py-2 rounded-xl text-sm">Fechar</button>
+    </div>
+</div>
+
+<!-- Modal Fornecedores -->
+<div id="suppliers-modal" class="modal px-5">
+    <div class="card-glass p-6 rounded-[2.5rem] w-full max-w-md max-h-[80vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-4"><h3 class="text-2xl font-black text-emerald-500 brand-font">Fornecedores</h3><button onclick="closeSuppliersModal()" class="text-gray-400 text-xl">&times;</button></div>
+        <div id="suppliers-list" class="space-y-3 mb-4"></div>
+        <div class="border-t border-white/10 pt-4"><h4 class="font-bold mb-2">Adicionar Fornecedor</h4><input type="text" id="supplier-name" placeholder="Nome" class="w-full bg-black/40 border border-white/10 rounded-xl p-2 mb-2"><input type="text" id="supplier-contact" placeholder="Contato (tel/email)" class="w-full bg-black/40 border border-white/10 rounded-xl p-2 mb-2"><input type="text" id="supplier-product" placeholder="Produto fornecido" class="w-full bg-black/40 border border-white/10 rounded-xl p-2 mb-2"><input type="number" id="supplier-price" placeholder="Preço (€)" class="w-full bg-black/40 border border-white/10 rounded-xl p-2 mb-3" step="0.01"><button onclick="addSupplier()" class="w-full bg-emerald-500 text-white py-2 rounded-xl font-bold">Adicionar</button></div>
+    </div>
+</div>
+
+<script>
+    const DEFAULT_CATEGORIES_RAW = [
+    { id: 101, name: "🍔 Pães Artesanais", items: ["Pão Batata", "Pão Pimenta", "Pão Esmagadinho"] },
+    { id: 102, name: "🥩 Proteínas Smash", items: ["Carne kg", "Frango kg", "Bacon Pacote", "Presunto Pacote", "Ovos Bandeja"] },
+    { id: 103, name: "🥬 Frescos & Veg", items: ["Alface", "Tomate Unidade", "Cebola", "Pepino", "Veggie", "Futuro"] },
+    { id: 104, name: "🧀 Queijos e Molhos", items: ["Cheddar Caixa", "Prato Caixa", "Mussarela Barra"] },
+    { id: 105, name: "🍟 Acompanhamentos", items: ["Batata Palito Pacote", "Batata Canoa Pacote", "Batata Doce kg"] },
+    { id: 106, name: "🍮 Sobremesas", items: ["Pudim Brullet", "Brownie"] },
+    { id: 107, name: "🧂 Temperos & Extras", items: ["Manteiga Barra", "Óleo Caixa", "Óleo Balde", "Sal 1kg", "Pimenta", "Alho", "Cebolinha", "Salsa"] },
+    { id: 108, name: "🥤 Bebidas", items: ["Água Mineral", "Refrigerante Lata", "Suco Natural", "Cerveja Long Neck", "Energético"] },
+    { id: 109, name: "🧼 Materiais de Limpeza", items: ["Detergente", "Desinfetante", "Álcool", "Papel Toalha", "Saco de Lixo"] },
+    { id: 110, name: "🎁 Brindes", items: ["Caneta", "Chaveiro", "Boné", "Camiseta", "Ímã"] },
+    { id: 111, name: "📢 Material Promocional", items: ["Flyer A5", "Cartaz A3", "Standee", "Adesivo", "Display de Mesa"] },
+    { id: 112, name: "📦 Embalagens", items: ["Caixa para Hamburguer", "Saco Kraft", "Embalagem Plástica", "Papel Manteiga", "Tampa para Copo"] },
+    { id: 113, name: "♻️ Descartáveis", items: ["Copo 200ml", "Prato de Papel", "Garfo Faca", "Guardanapo", "Palito"] }
+];
+
+    function convertToFullFormat(categories) {
+        return categories.map(cat => ({
+            id: cat.id,
+            name: cat.name,
+            visible: cat.visible !== undefined ? cat.visible : true,
+            items: (cat.items || []).map(item => {
+                if (typeof item === 'string') return { name: item, visible: true, costPrice: 0, salePrice: 0, quantity: 0, supplierId: null };
+                return { 
+                    name: item.name, 
+                    visible: item.visible !== undefined ? item.visible : true, 
+                    costPrice: item.costPrice || 0, 
+                    salePrice: item.salePrice || 0, 
+                    quantity: item.quantity || 0,
+                    supplierId: item.supplierId !== undefined ? item.supplierId : null
+                };
+            })
+        }));
+    }
+
+    let inventory = [];
+    let isEditMode = false;
+    let suppliers = [];
+
+    // ---------- FUNÇÕES DE ARMAZENAMENTO ----------
+    function loadData() {
+        let stored = localStorage.getItem('smash_prices_full');
+        if (stored) {
+            try { inventory = convertToFullFormat(JSON.parse(stored)); } catch(e) { inventory = convertToFullFormat(DEFAULT_CATEGORIES_RAW); }
+        } else { inventory = convertToFullFormat(DEFAULT_CATEGORIES_RAW); }
+        let supp = localStorage.getItem('smash_suppliers');
+        if (supp) suppliers = JSON.parse(supp); else suppliers = [];
+    }
+    function persistData() { 
+        localStorage.setItem('smash_prices_full', JSON.stringify(inventory)); 
+        localStorage.setItem('smash_suppliers', JSON.stringify(suppliers));
+        // Notificar outras abas sobre a mudança
+        if (window.broadcastChannel) window.broadcastChannel.postMessage({ type: 'DATA_UPDATED' });
+    }
+    function saveSuppliers() { persistData(); } // unificado
+    function saveNotes() { localStorage.setItem('smash_notes_prices', document.getElementById('notes').value); }
+    function loadNotes() { let n = localStorage.getItem('smash_notes_prices'); if(n !== null) document.getElementById('notes').value = n; }
+
+    // ---------- EXPORTAR/IMPORTAR DADOS ----------
+    function exportData() {
+        const exportObj = {
+            inventory: inventory,
+            suppliers: suppliers,
+            notes: document.getElementById('notes').value,
+            version: '1.0'
+        };
+        const dataStr = JSON.stringify(exportObj, null, 2);
+        const blob = new Blob([dataStr], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `smash_data_${new Date().toISOString().slice(0,19)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    function importData() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'application/json';
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    const imported = JSON.parse(ev.target.result);
+                    if (imported.inventory && imported.suppliers !== undefined) {
+                        inventory = convertToFullFormat(imported.inventory);
+                        suppliers = imported.suppliers;
+                        if (imported.notes !== undefined) document.getElementById('notes').value = imported.notes;
+                        persistData();
+                        render();
+                        alert('Dados importados com sucesso! A página será recarregada para aplicar todas as alterações.');
+                        location.reload();
+                    } else {
+                        alert('Arquivo inválido. Não contém os dados esperados.');
+                    }
+                } catch(err) {
+                    alert('Erro ao ler o arquivo: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    }
+
+    // ---------- SINCRONIZAÇÃO ENTRE ABAS ----------
+    function setupBroadcast() {
+        if (window.BroadcastChannel) {
+            window.broadcastChannel = new BroadcastChannel('smash_sync');
+            window.broadcastChannel.onmessage = (event) => {
+                if (event.data.type === 'DATA_UPDATED') {
+                    // Recarregar dados de outras abas
+                    loadData();
+                    render();
+                }
+            };
+        }
+    }
+
+    // ---------- RESTANTE DO CÓDIGO (sem alterações significativas) ----------
+    function toggleEditMode() {
+        isEditMode = !isEditMode;
+        document.getElementById('btn-edit-mode').classList.toggle('edit-active');
+        document.getElementById('management-zone').classList.toggle('hidden');
+        render();
+    }
+
+    function toggleCategoryVisibility(catId) { let cat = inventory.find(c => c.id === catId); if(cat) { cat.visible = !cat.visible; persistData(); render(); } }
+    function toggleItemVisibility(catId, itemName) { let cat = inventory.find(c => c.id === catId); if(cat) { let item = cat.items.find(i => i.name === itemName); if(item) { item.visible = !item.visible; persistData(); render(); } } }
+    function updatePrice(catId, itemName, field, value) { let cat = inventory.find(c => c.id === catId); if(cat) { let item = cat.items.find(i => i.name === itemName); if(item) { let num = parseFloat(value); if(isNaN(num)) num=0; item[field]=Math.max(0,num); persistData(); render(); } } }
+    function updateQuantity(catId, itemName, value) { let cat = inventory.find(c => c.id === catId); if(cat) { let item = cat.items.find(i => i.name === itemName); if(item) { let num = parseInt(value); if(isNaN(num)) num=0; item.quantity = Math.max(0,num); persistData(); render(); } } }
+    function updateSupplier(catId, itemName, supplierId) { let cat = inventory.find(c => c.id === catId); if(cat) { let item = cat.items.find(i => i.name === itemName); if(item) { item.supplierId = supplierId === "" ? null : parseInt(supplierId); persistData(); render(); } } }
+    function calculateMargin(cost, sale) { if(cost<=0) return sale>0?100:0; return ((sale-cost)/cost)*100; }
+    function getSupplierName(id) { let s = suppliers.find(sup => sup.id === id); return s ? s.name : "Não associado"; }
+    function getSupplierPrice(id) { let s = suppliers.find(sup => sup.id === id); return s ? s.price : 0; }
+
+    function render() {
+        const container = document.getElementById('inventory-container');
+        if (!container) return;
+        const searchTerm = document.getElementById('search-input')?.value.toLowerCase().trim() || '';
+        container.innerHTML = '';
+        inventory.forEach(category => {
+            let filteredItems = category.items.filter(item => item.name.toLowerCase().includes(searchTerm) || category.name.toLowerCase().includes(searchTerm));
+            if (category.name.toLowerCase().includes(searchTerm) && filteredItems.length === 0) filteredItems = [...category.items];
+            if (filteredItems.length === 0) return;
+            const catDiv = document.createElement('div'); catDiv.className = 'animate-in space-y-3';
+            const eyeIconCat = category.visible ? 'fa-eye' : 'fa-eye-slash';
+            let headerHtml = `<div class="flex justify-between items-center px-1 pb-1 flex-wrap gap-2"><div class="flex items-center gap-2"><i class="fas fa-tag text-emerald-500/70 text-[10px]"></i><h2 class="text-emerald-500 font-extrabold uppercase text-[11px]">${escapeHtml(category.name)}</h2><button onclick="toggleCategoryVisibility(${category.id})" class="eye-btn text-gray-400"><i class="fas ${eyeIconCat} text-xs"></i></button></div>`;
+            if (isEditMode) headerHtml += `<div class="flex gap-3 text-[9px] font-black"><button onclick="openItemModal(${category.id})" class="text-emerald-400"><i class="fas fa-plus-circle"></i> Item</button><button onclick="openCategoryModal(${category.id})" class="text-blue-400"><i class="fas fa-pen"></i></button><button onclick="confirmDeleteCategory(${category.id})" class="text-red-400"><i class="fas fa-trash-can"></i></button></div>`;
+            headerHtml += `</div>`;
+            let itemsHtml = `<div class="grid gap-2.5">`;
+            filteredItems.forEach(item => {
+                const margin = calculateMargin(item.costPrice, item.salePrice);
+                const marginClass = margin >= 0 ? 'margin-badge' : 'margin-badge negative-margin';
+                const itemEyeIcon = item.visible ? 'fa-eye' : 'fa-eye-slash';
+                const supplierName = getSupplierName(item.supplierId);
+                const supplierPrice = getSupplierPrice(item.supplierId);
+                itemsHtml += `
+                    <div class="card-glass p-3 rounded-2xl">
+                        <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                            <div class="flex items-center gap-2 flex-1 min-w-[100px]"><span class="font-semibold text-[14px] break-words">${escapeHtml(item.name)}</span><button onclick="toggleItemVisibility(${category.id}, '${escapeHtml(item.name)}')" class="eye-btn text-gray-400"><i class="fas ${itemEyeIcon} text-[10px]"></i></button></div>
+                            <div class="flex flex-wrap items-center gap-2 justify-start sm:justify-end">
+                                <div><span class="text-[9px] text-gray-400">Qtd</span><input type="number" value="${item.quantity}" onchange="updateQuantity(${category.id}, '${escapeHtml(item.name)}', this.value)" class="qty-input bg-black/30 rounded-lg px-2 py-1 text-emerald-400 font-bold text-sm text-center" min="0"></div>
+                                <div><span class="text-[9px] text-gray-400">Custo</span><input type="number" value="${item.costPrice.toFixed(2)}" onchange="updatePrice(${category.id}, '${escapeHtml(item.name)}', 'costPrice', this.value)" class="price-input bg-black/30 rounded-lg px-2 py-1 text-emerald-400 font-bold text-sm text-center" step="0.01"></div>
+                                <div><span class="text-[9px] text-gray-400">Venda</span><input type="number" value="${item.salePrice.toFixed(2)}" onchange="updatePrice(${category.id}, '${escapeHtml(item.name)}', 'salePrice', this.value)" class="price-input bg-black/30 rounded-lg px-2 py-1 text-emerald-400 font-bold text-sm text-center" step="0.01"></div>
+                                <div><span class="text-[9px] text-gray-400">Margem</span><span class="${marginClass}">${margin.toFixed(1)}%</span></div>
+                            </div>
+                        </div>
+                        <div class="mt-1 flex flex-wrap justify-between items-center gap-2">
+                            <div class="supplier-tag"><i class="fas fa-truck text-[9px] mr-1"></i> ${escapeHtml(supplierName)} ${supplierPrice > 0 ? `(€${supplierPrice.toFixed(2)})` : ''}</div>
+                            ${isEditMode ? `<button onclick="openSupplierSelectModal(${category.id}, '${escapeHtml(item.name)}', ${item.supplierId === null ? 'null' : item.supplierId})" class="text-[10px] text-blue-400"><i class="fas fa-link"></i> Associar Fornecedor</button>` : ''}
+                        </div>
+                        ${isEditMode ? `<div class="flex justify-end gap-3 mt-2 pt-1 border-t border-white/10"><button onclick="openItemModal(${category.id}, '${escapeHtml(item.name)}')" class="text-[9px] font-black text-blue-400">✎ Renomear</button><button onclick="confirmDeleteItem(${category.id}, '${escapeHtml(item.name)}')" class="text-[9px] font-black text-red-400">🗑 Remover</button></div>` : ''}
+                    </div>`;
+            });
+            itemsHtml += `</div>`;
+            catDiv.innerHTML = headerHtml + itemsHtml;
+            container.appendChild(catDiv);
+        });
+        if (container.children.length === 0) container.innerHTML = `<div class="text-center py-12 text-gray-400 text-sm card-glass rounded-3xl p-8"><i class="fas fa-box-open text-4xl mb-3 opacity-50"></i><p>Nenhum item encontrado.</p></div>`;
+    }
+
+    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => m==='&'?'&amp;':m==='<'?'&lt;':'&gt;'); }
+
+    function openSupplierSelectModal(catId, itemName, currentSupplierId) {
+        let options = '<option value="">Nenhum</option>';
+        suppliers.forEach(s => { options += `<option value="${s.id}" ${currentSupplierId === s.id ? 'selected' : ''}>${escapeHtml(s.name)} (€${s.price.toFixed(2)})</option>`; });
+        document.getElementById('modal-title').innerText = '🔗 Associar Fornecedor';
+        document.getElementById('modal-content').innerHTML = `<select id="supplier-select" class="w-full h-14 bg-black/40 border border-white/15 px-5 rounded-xl text-white">${options}</select>`;
+        document.getElementById('modal-confirm').onclick = () => {
+            let selected = document.getElementById('supplier-select').value;
+            updateSupplier(catId, itemName, selected === "" ? null : parseInt(selected));
+            closeModal();
+        };
+        openModal();
+    }
+
+    function confirmClearPrices() {
+        document.getElementById('modal-title').innerText = '🧹 Zerar Preços e Quantidades';
+        document.getElementById('modal-content').innerHTML = `<div class="text-center"><i class="fas fa-broom-ball text-3xl text-amber-400"></i><p class="text-sm mt-2">Zerar todos os preços e quantidades?</p></div>`;
+        document.getElementById('modal-confirm').onclick = () => { inventory.forEach(cat => cat.items.forEach(item => { item.costPrice=0; item.salePrice=0; item.quantity=0; })); persistData(); render(); closeModal(); };
+        openModal();
+    }
+    function confirmFullReset() {
+        document.getElementById('modal-title').innerText = '⚠️ RESET COMPLETO';
+        document.getElementById('modal-content').innerHTML = `<div class="text-center"><i class="fas fa-database text-3xl text-red-500"></i><p class="text-sm mt-2">Restaurar configurações originais?</p></div>`;
+        document.getElementById('modal-confirm').onclick = () => { inventory = convertToFullFormat(DEFAULT_CATEGORIES_RAW); suppliers = []; document.getElementById('notes').value = ''; localStorage.setItem('smash_notes_prices', ''); persistData(); render(); closeModal(); };
+        openModal();
+    }
+    function openModal() { document.getElementById('modal-container').classList.add('active'); }
+    function closeModal() { document.getElementById('modal-container').classList.remove('active'); }
+
+    function openCategoryModal(catId = null) {
+        const category = catId ? inventory.find(c => c.id === catId) : null;
+        document.getElementById('modal-title').innerText = catId ? '✏️ Editar Categoria' : '➕ Nova Categoria';
+        document.getElementById('modal-content').innerHTML = `<input type="text" id="modal-input" value="${category ? escapeHtml(category.name) : ''}" class="w-full h-14 bg-black/40 border border-white/15 px-5 rounded-xl text-white" placeholder="Nome da categoria">`;
+        document.getElementById('modal-confirm').onclick = () => {
+            let newName = document.getElementById('modal-input').value.trim();
+            if(!newName) return;
+            if(catId) category.name = newName;
+            else inventory.push({ id: Date.now(), name: newName, visible: true, items: [{ name: "Produto 1", visible: true, costPrice:0, salePrice:0, quantity:0, supplierId:null }, { name: "Produto 2", visible: true, costPrice:0, salePrice:0, quantity:0, supplierId:null }, { name: "Produto 3", visible: true, costPrice:0, salePrice:0, quantity:0, supplierId:null }] });
+            persistData(); closeModal(); render();
+        };
+        openModal();
+    }
+    function openItemModal(catId, oldItemName = null) {
+        const category = inventory.find(c => c.id === catId);
+        if(!category) return;
+        const isEditing = (oldItemName !== null);
+        document.getElementById('modal-title').innerText = isEditing ? '✏️ Renomear Item' : '✨ Adicionar Item';
+        document.getElementById('modal-content').innerHTML = `<input type="text" id="modal-input" value="${isEditing ? escapeHtml(oldItemName) : ''}" class="w-full h-14 bg-black/40 border border-white/15 px-5 rounded-xl text-white" placeholder="Nome do item">`;
+        document.getElementById('modal-confirm').onclick = () => {
+            let newName = document.getElementById('modal-input').value.trim();
+            if(!newName) return;
+            if(isEditing) { let item = category.items.find(i => i.name === oldItemName); if(item) item.name = newName; }
+            else { if(!category.items.some(i => i.name === newName)) category.items.push({ name: newName, visible: true, costPrice:0, salePrice:0, quantity:0, supplierId:null }); }
+            persistData(); closeModal(); render();
+        };
+        openModal();
+    }
+    function confirmDeleteCategory(catId) {
+        let cat = inventory.find(c => c.id === catId);
+        document.getElementById('modal-title').innerText = '⚠️ Apagar Categoria';
+        document.getElementById('modal-content').innerHTML = `<p>Remover <strong>${escapeHtml(cat.name)}</strong>?</p>`;
+        document.getElementById('modal-confirm').onclick = () => { inventory = inventory.filter(c => c.id !== catId); persistData(); closeModal(); render(); };
+        openModal();
+    }
+    function confirmDeleteItem(catId, itemName) {
+        document.getElementById('modal-title').innerText = '❌ Remover Item';
+        document.getElementById('modal-content').innerHTML = `<p>Excluir <strong>${escapeHtml(itemName)}</strong>?</p>`;
+        document.getElementById('modal-confirm').onclick = () => {
+            let category = inventory.find(c => c.id === catId);
+            if(category) { category.items = category.items.filter(i => i.name !== itemName); persistData(); }
+            closeModal(); render();
+        };
+        openModal();
+    }
+
+    let calcExpression = '';
+    function openCalculator() { document.getElementById('calculator-modal').classList.add('active'); }
+    function closeCalculator() { document.getElementById('calculator-modal').classList.remove('active'); }
+    function calcAppend(val) { calcExpression += val; document.getElementById('calc-display').value = calcExpression; }
+    function calcClear() { calcExpression = ''; document.getElementById('calc-display').value = ''; }
+    function calcBackspace() { calcExpression = calcExpression.slice(0,-1); document.getElementById('calc-display').value = calcExpression; }
+    function calcResult() { try { let res = eval(calcExpression.replace(/×/g,'*').replace(/÷/g,'/')); calcExpression = res.toString(); document.getElementById('calc-display').value = calcExpression; } catch(e) { calcExpression = ''; document.getElementById('calc-display').value = 'Erro'; } }
+
+    function openSuppliersModal() { renderSuppliersList(); document.getElementById('suppliers-modal').classList.add('active'); }
+    function closeSuppliersModal() { document.getElementById('suppliers-modal').classList.remove('active'); }
+    function renderSuppliersList() {
+        let container = document.getElementById('suppliers-list');
+        if(!container) return;
+        if(suppliers.length === 0) { container.innerHTML = '<p class="text-gray-400 text-center">Nenhum fornecedor cadastrado.</p>'; return; }
+        container.innerHTML = '';
+        suppliers.forEach((s, idx) => {
+            let div = document.createElement('div'); div.className = 'card-glass p-3 rounded-xl';
+            div.innerHTML = `<div class="flex justify-between"><div><strong>${escapeHtml(s.name)}</strong><br><span class="text-xs text-gray-400">${escapeHtml(s.contact)}</span><br><span class="text-xs">Produto: ${escapeHtml(s.product)}</span><br><span class="text-xs text-emerald-400">Preço: €${parseFloat(s.price).toFixed(2)}</span></div><button onclick="deleteSupplier(${idx})" class="text-red-400 text-sm"><i class="fas fa-trash"></i></button></div>`;
+            container.appendChild(div);
+        });
+    }
+    function addSupplier() {
+        let name = document.getElementById('supplier-name').value.trim();
+        let contact = document.getElementById('supplier-contact').value.trim();
+        let product = document.getElementById('supplier-product').value.trim();
+        let price = parseFloat(document.getElementById('supplier-price').value);
+        if(isNaN(price)) price = 0;
+        if(!name) return;
+        let newId = Date.now();
+        suppliers.push({ id: newId, name, contact, product, price });
+        persistData();
+        document.getElementById('supplier-name').value = '';
+        document.getElementById('supplier-contact').value = '';
+        document.getElementById('supplier-product').value = '';
+        document.getElementById('supplier-price').value = '';
+        renderSuppliersList();
+    }
+    function deleteSupplier(idx) { suppliers.splice(idx,1); persistData(); renderSuppliersList(); }
+
+    function sendWhatsAppReport() {
+        const notes = document.getElementById('notes').value;
+        const now = new Date();
+        const formattedDate = now.toLocaleDateString('pt-PT');
+        const formattedTime = now.toLocaleTimeString('pt-PT', { hour:'2-digit', minute:'2-digit' });
+        let message = `💰 *SMASH IT - RESUMO DE GESTÃO* 💰\n📅 ${formattedDate}  ⏰ ${formattedTime}\n━━━━━━━━━━━━━━━━━━━━\n`;
+        inventory.forEach(cat => {
+            if (!cat.visible) return;
+            let catSection = `\n*${cat.name.toUpperCase()}*\n`;
+            let hasVisible = false;
+            cat.items.forEach(item => {
+                if (!item.visible) return;
+                catSection += `▸ ${item.name}\n   📦 Qtd: ${item.quantity}  |  💸 Custo: €${item.costPrice.toFixed(2)}  |  🏷️ Venda: €${item.salePrice.toFixed(2)}  |  📈 Margem: ${calculateMargin(item.costPrice,item.salePrice).toFixed(1)}%\n`;
+                hasVisible = true;
+            });
+            if(hasVisible) message += catSection + `\n`;
+        });
+        if(notes.trim()) message += `\n📌 *OBSERVAÇÕES:*\n${notes.trim()}\n`;
+        if(suppliers.length) { 
+            message += `\n🏭 *FORNECEDORES:*\n`; 
+            suppliers.forEach(s => message += `• ${s.name} - ${s.contact}\n   Produto: ${s.product}  |  Preço: €${parseFloat(s.price).toFixed(2)}\n`); 
+        }
+        message += `\n🔁 Relatório gerado via Smash Gestão`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+    }
+
+    function sendDirectorReport() {
+        const notes = document.getElementById('notes').value;
+        const now = new Date();
+        const formattedDate = now.toLocaleDateString('pt-PT');
+        const formattedTime = now.toLocaleTimeString('pt-PT', { hour:'2-digit', minute:'2-digit' });
+        let message = `📊 *SMASH IT - RELATÓRIO PARA DIRETORIA* 📊\n📅 ${formattedDate}  ⏰ ${formattedTime}\n━━━━━━━━━━━━━━━━━━━━\n`;
+        message += `\n📌 *LEVANTAMENTO DE PREÇOS POR FORNECEDOR*\n`;
+        
+        let supplierItems = new Map();
+        inventory.forEach(cat => {
+            if (!cat.visible) return;
+            cat.items.forEach(item => {
+                if (!item.visible) return;
+                let supId = item.supplierId;
+                if (supId) {
+                    let sup = suppliers.find(s => s.id === supId);
+                    if (sup) {
+                        if (!supplierItems.has(supId)) {
+                            supplierItems.set(supId, { name: sup.name, contact: sup.contact, items: [] });
+                        }
+                        supplierItems.get(supId).items.push({
+                            catName: cat.name,
+                            itemName: item.name,
+                            costPrice: item.costPrice,
+                            salePrice: item.salePrice,
+                            quantity: item.quantity,
+                            supplierPrice: sup.price
+                        });
+                    }
+                }
+            });
+        });
+        
+        if (supplierItems.size === 0) {
+            message += `\n⚠️ Nenhum item associado a fornecedores. Utilize o modo gestão para associar fornecedores aos produtos.\n`;
+        } else {
+            for (let [supId, data] of supplierItems.entries()) {
+                message += `\n🏭 *${data.name.toUpperCase()}* (${data.contact})\n`;
+                data.items.forEach(it => {
+                    let margin = calculateMargin(it.costPrice, it.salePrice);
+                    message += `▸ ${it.itemName} (${it.catName})\n   📦 Qtd: ${it.quantity}  |  Custo: €${it.costPrice.toFixed(2)}  |  Venda: €${it.salePrice.toFixed(2)}  |  Margem: ${margin.toFixed(1)}%\n`;
+                    message += `   🔹 Preço fornecedor: €${it.supplierPrice.toFixed(2)}\n`;
+                });
+            }
+        }
+        
+        let itemsWithoutSupplier = [];
+        inventory.forEach(cat => {
+            if (!cat.visible) return;
+            cat.items.forEach(item => {
+                if (item.visible && !item.supplierId) {
+                    itemsWithoutSupplier.push(`${item.name} (${cat.name})`);
+                }
+            });
+        });
+        if (itemsWithoutSupplier.length > 0) {
+            message += `\n⚠️ *ITENS SEM FORNECEDOR ASSOCIADO:*\n`;
+            itemsWithoutSupplier.forEach(i => message += `• ${i}\n`);
+        }
+        
+        if (notes.trim()) message += `\n📌 *OBSERVAÇÕES:*\n${notes.trim()}\n`;
+        message += `\n🔁 Relatório gerado via Smash Gestão - Diretoria`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+    }
+
+    async function generateAndSendPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        let y = 20;
+        doc.setFontSize(18); doc.setTextColor(16,185,129); doc.text("SMASH IT - RELATÓRIO DE GESTÃO", 20, y); y+=10;
+        doc.setFontSize(10); doc.setTextColor(100);
+        doc.text(`Data: ${new Date().toLocaleString('pt-PT')}`, 20, y); y+=8;
+        
+        doc.setFontSize(12); doc.setTextColor(16,185,129); doc.text("PRODUTOS", 20, y); y+=6;
+        inventory.forEach(cat => {
+            if(!cat.visible) return;
+            let visibleItems = cat.items.filter(i => i.visible);
+            if(visibleItems.length === 0) return;
+            if(y > 260) { doc.addPage(); y=20; }
+            doc.setFontSize(10); doc.setTextColor(0);
+            doc.text(cat.name, 20, y); y+=4;
+            visibleItems.forEach(item => {
+                let margin = calculateMargin(item.costPrice, item.salePrice).toFixed(1);
+                let line = `${item.name} | Qtd:${item.quantity} | Custo:€${item.costPrice.toFixed(2)} | Venda:€${item.salePrice.toFixed(2)} | Margem:${margin}% | Forn:${getSupplierName(item.supplierId)}`;
+                let split = doc.splitTextToSize(line, 170);
+                if(y+split.length*5 > 280) { doc.addPage(); y=20; }
+                doc.text(split, 22, y); y += split.length*5;
+            });
+            y+=2;
+        });
+        
+        if(suppliers.length) { 
+            if(y+20>280){doc.addPage(); y=20;} 
+            doc.setFontSize(12); doc.setTextColor(16,185,129); doc.text("FORNECEDORES",20,y); y+=6;
+            suppliers.forEach(s => { 
+                let line = `${s.name} - ${s.contact} | Produto: ${s.product} | Preço: €${parseFloat(s.price).toFixed(2)}`;
+                let split = doc.splitTextToSize(line, 170);
+                if(y+split.length*5 > 280) { doc.addPage(); y=20; }
+                doc.text(split, 22, y); y += split.length*5;
+            }); 
+        }
+        
+        const notes = document.getElementById('notes').value;
+        if(notes) { if(y+20>280){doc.addPage(); y=20;} doc.setFontSize(10); doc.setTextColor(100); doc.text("Observações:",20,y); y+=6; doc.text(notes,20,y); }
+        
+        const pdfBlob = doc.output('blob');
+        const url = URL.createObjectURL(pdfBlob);
+        const a = document.createElement('a'); a.href = url; a.download = `relatorio_smash_${Date.now()}.pdf`; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        if(confirm("PDF gerado com sucesso! Deseja abrir o WhatsApp para enviar o arquivo manualmente?")) window.open('https://wa.me/', '_blank');
+    }
+
+    function toggleTheme() { document.body.classList.toggle('light-theme'); let icon=document.getElementById('theme-icon'); let isLight=document.body.classList.contains('light-theme'); icon.className=isLight?'fas fa-sun text-base':'fas fa-moon text-base'; localStorage.setItem('smash_theme_prices',isLight?'light':'dark'); }
+    function loadTheme() { let saved=localStorage.getItem('smash_theme_prices'); if(saved==='light'){ document.body.classList.add('light-theme'); document.getElementById('theme-icon').className='fas fa-sun text-base'; } }
+
+    loadData(); loadTheme(); loadNotes(); setupBroadcast();
+    window.onload = () => { render(); };
+    window.addEventListener('storage', (e) => { if(e.key==='smash_prices_full' || e.key==='smash_suppliers'){ loadData(); render(); } });
+</script>
+
+<!-- Modal genérico -->
+<div id="modal-container" class="modal px-5">
+    <div class="card-glass p-6 rounded-[2.5rem] w-full max-w-sm border border-emerald-500/30">
+        <div class="text-center mb-2"><h3 id="modal-title" class="text-2xl font-black text-emerald-500 brand-font">Ação</h3><div class="w-12 h-0.5 bg-emerald-500/50 mx-auto mt-1"></div></div>
+        <div id="modal-content" class="space-y-5 my-4"></div>
+        <div class="flex gap-3 mt-4"><button onclick="closeModal()" class="flex-1 h-12 bg-white/10 rounded-xl font-bold text-gray-300 text-xs">Cancelar</button><button id="modal-confirm" class="flex-1 btn-primary h-12 rounded-xl font-bold text-xs">Confirmar</button></div>
+    </div>
+</div>
+</body>
+</html>
