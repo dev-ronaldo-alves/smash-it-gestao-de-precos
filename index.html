@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <link rel="icon" type="image/svg+xml" href="https://emojicdn.elk.sh/💰">
-    <title>Smash It - Gestão | Preços, Fornecedores, Relatórios</title>
+    <link rel="icon" type="image/svg+xml" href="https://emojicdn.elk.sh/🚚">
+    <title>Smash It - Gestão | Custos, Fornecedores, Stock</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;500;600;700;800&display=swap');
         
@@ -26,6 +27,8 @@
             --header-bg: rgba(0, 0, 0, 0.9);
             --footer-gradient: linear-gradient(to top, black, rgba(0,0,0,0.95), transparent);
             --modal-bg: rgba(0, 0, 0, 0.92);
+            --shadow-sm: 0 4px 12px rgba(0,0,0,0.1);
+            --shadow-hover: 0 12px 24px -8px rgba(0,0,0,0.3);
         }
         
         body.light-theme {
@@ -39,6 +42,7 @@
             --header-bg: rgba(255, 248, 235, 0.95);
             --footer-gradient: linear-gradient(to top, #fff4e0, rgba(255,244,224,0.95), transparent);
             --modal-bg: rgba(255, 248, 235, 0.98);
+            --shadow-hover: 0 12px 24px -8px rgba(0,0,0,0.15);
         }
         
         body {
@@ -46,255 +50,250 @@
             background: radial-gradient(circle at 10% 20%, var(--bg-gradient-start), var(--bg-gradient-end));
             color: var(--text-primary);
             transition: background 0.2s ease, color 0.2s ease;
+            margin: 0;
+            padding: 0;
         }
+        
+        /* PRELOADER (splash screen) */
+        #preloader {
+            position: fixed;
+            inset: 0;
+            background: #0a0a0c;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease-out;
+            backdrop-filter: blur(2px);
+        }
+        body.light-theme #preloader {
+            background: #fff8ec;
+        }
+        .preloader-content {
+            text-align: center;
+            padding: 2rem;
+            animation: fadeSlideUp 0.6s ease-out;
+        }
+        .burger-icon {
+            font-size: 5rem;
+            display: inline-block;
+            animation: bounceBurger 0.9s infinite alternate ease-in-out;
+            filter: drop-shadow(0 8px 12px rgba(16,185,129,0.3));
+        }
+        .preloader-title {
+            font-size: 2.8rem;
+            margin-top: 1rem;
+            background: linear-gradient(135deg, #10b981, #059669);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: none;
+            letter-spacing: 3px;
+        }
+        .progress-container {
+            width: 280px;
+            max-width: 70vw;
+            height: 8px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            margin: 1.8rem auto 0.5rem;
+            overflow: hidden;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
+        }
+        .progress-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #059669);
+            border-radius: 20px;
+            animation: fillProgress 2.8s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+        }
+        .preloader-sub {
+            font-size: 0.7rem;
+            opacity: 0.7;
+            margin-top: 1rem;
+            letter-spacing: 1px;
+            font-weight: 500;
+        }
+        @keyframes fillProgress {
+            0% { width: 0%; }
+            40% { width: 45%; }
+            70% { width: 80%; }
+            100% { width: 100%; }
+        }
+        @keyframes bounceBurger {
+            0% { transform: translateY(0px) scale(1); }
+            100% { transform: translateY(-12px) scale(1.05); text-shadow: 0 0 8px #10b981; }
+        }
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* resto do CSS */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: rgba(16,185,129,0.5); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(16,185,129,0.8); }
+        body.light-theme ::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); }
+        body.light-theme ::-webkit-scrollbar-thumb { background: rgba(16,185,129,0.6); }
         
         .app-container {
             max-width: 100%;
             margin: 0 auto;
             padding: 0 1rem;
         }
-        
-        @media (min-width: 640px) {
-            .app-container { max-width: 640px; }
-        }
-        @media (min-width: 768px) {
-            .app-container { max-width: 768px; }
-        }
-        @media (min-width: 1024px) {
-            .app-container { max-width: 1024px; }
-        }
+        @media (min-width: 640px) { .app-container { max-width: 640px; } }
+        @media (min-width: 768px) { .app-container { max-width: 768px; } }
+        @media (min-width: 1024px) { .app-container { max-width: 1024px; } }
         
         .brand-font { font-family: 'Bangers', cursive; letter-spacing: 2px; text-shadow: 0 2px 0 rgba(0,0,0,0.3); }
-        .card-glass { background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid var(--card-border); transition: all 0.2s; }
-        .card-glass:hover { border-color: rgba(16, 185, 129, 0.4); }
+        .card-glass { background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid var(--card-border); transition: all 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1); }
+        .card-glass:hover { border-color: rgba(16, 185, 129, 0.5); transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+        
         .btn-primary { background: linear-gradient(105deg, #10b981 0%, #059669 100%); color: white; font-weight: 800; transition: transform 0.15s; box-shadow: 0 8px 20px -6px rgba(16, 185, 129, 0.2); }
         .btn-primary:active { transform: scale(0.97); }
-        .btn-secondary { background: linear-gradient(105deg, #3b82f6 0%, #2563eb 100%); color: white; font-weight: 800; }
+        
         .modal { display: none; position: fixed; inset: 0; background: var(--modal-bg); backdrop-filter: blur(10px); z-index: 200; align-items: center; justify-content: center; }
         .modal.active { display: flex; animation: modalFade 0.25s ease-out; }
         @keyframes modalFade { from { opacity: 0; backdrop-filter: blur(0px);} to { opacity: 1; backdrop-filter: blur(10px);} }
+        
         .animate-in { animation: slideUp 0.3s ease-out forwards; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+        
         input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
+        
         .edit-active { background: #10b981 !important; color: white !important; transform: rotate(90deg); }
         .eye-btn { transition: all 0.1s; cursor: pointer; opacity: 0.7; }
         .eye-btn:hover { opacity: 1; transform: scale(1.05); }
-        .price-input { width: 85px; text-align: center; font-weight: 600; }
-        .qty-input { width: 65px; text-align: center; font-weight: 600; }
-        .margin-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; background: rgba(16,185,129,0.15); color: #10b981; white-space: nowrap; }
-        .negative-margin { background: rgba(239,68,68,0.15); color: #ef4444; }
-        .supplier-tag { font-size: 10px; background: rgba(59,130,246,0.2); padding: 4px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
         
-        /* Duas linhas horizontais de botões redondos */
-        .button-row {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 0.75rem;
-            margin: 0.5rem 0;
+        .price-input { width: 100px; text-align: center; font-weight: 600; padding: 6px 4px; border-radius: 12px; background: var(--input-bg); border: 1px solid var(--input-border); }
+        .qty-input { width: 70px; text-align: center; font-weight: 600; padding: 6px 4px; border-radius: 12px; background: var(--input-bg); border: 1px solid var(--input-border); }
+        
+        .qty-control {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 40px;
+            padding: 4px 8px;
         }
-        .button-row button {
-            width: 52px;
-            height: 52px;
+        .qty-control button {
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            transition: all 0.1s;
+        }
+        .qty-control button:active { transform: scale(0.9); background: rgba(16,185,129,0.5); }
+        .qty-control input {
+            width: 50px;
+            text-align: center;
+            background: transparent;
+            border: none;
+            font-weight: 700;
+            color: inherit;
+            font-size: 14px;
+        }
+        
+        .supplier-tag { font-size: 10px; background: rgba(59,130,246,0.2); padding: 5px 12px; border-radius: 30px; display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        
+        .button-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.9rem; margin: 0.75rem 0; }
+        .button-row button { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: #9ca3af; transition: all 0.2s; cursor: pointer; position: relative; }
+        .button-row button i { font-size: 1.25rem; }
+        .button-row button:hover { border-color: rgba(16,185,129,0.5); color: #10b981; background: rgba(16,185,129,0.15); transform: scale(1.05); }
+        
+        /* ponto de notificação */
+        .notification-dot {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            width: 14px;
+            height: 14px;
+            background-color: #ef4444;
+            border-radius: 50%;
+            border: 2px solid var(--header-bg);
+            box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+            display: none;
+        }
+        
+        .management-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+        .management-buttons button {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 1rem;
+            font-weight: 700;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            color: #9ca3af;
-            transition: all 0.2s;
-            cursor: pointer;
-            padding: 0;
+            gap: 0.5rem;
         }
-        .button-row button i {
-            font-size: 1.25rem;
-        }
-        .button-row button:hover {
-            border-color: rgba(16, 185, 129, 0.5);
-            color: #10b981;
-            background: rgba(16, 185, 129, 0.15);
-            transform: scale(1.05);
-        }
-        .button-row button:active {
-            transform: scale(0.95);
-        }
-        .btn-director {
-            background: rgba(59, 130, 246, 0.25);
-            border-color: rgba(59, 130, 246, 0.4);
-            color: #60a5fa;
-        }
-        .btn-director:hover {
-            background: rgba(59, 130, 246, 0.4);
-            color: #93c5fd;
-        }
-        .btn-reset-amber {
-            background: rgba(245, 158, 11, 0.2);
-            border-color: rgba(245, 158, 11, 0.4);
-            color: #fbbf24;
-        }
-        .btn-reset-red {
-            background: rgba(239, 68, 68, 0.2);
-            border-color: rgba(239, 68, 68, 0.4);
-            color: #f87171;
-        }
+        .btn-management-primary { background: rgba(16,185,129,0.2); color: #10b981; border: 1px solid rgba(16,185,129,0.3); }
+        .btn-management-primary:hover { background: rgba(16,185,129,0.3); transform: translateY(-1px); }
+        .btn-management-warning { background: rgba(245,158,11,0.2); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+        .btn-management-warning:hover { background: rgba(245,158,11,0.3); }
+        .btn-management-danger { background: rgba(239,68,68,0.2); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+        .btn-management-danger:hover { background: rgba(239,68,68,0.3); }
         
-        @media (max-width: 480px) {
-            .price-input { width: 70px; font-size: 12px; }
-            .qty-input { width: 55px; font-size: 12px; }
-            .margin-badge { font-size: 9px; padding: 2px 6px; }
-            .supplier-tag { font-size: 9px; }
-            .button-row button {
-                width: 44px;
-                height: 44px;
-            }
-            .button-row button i {
-                font-size: 1rem;
-            }
-            .button-row {
-                gap: 0.5rem;
-            }
-        }
+        .flash-save { animation: flashSave 0.6s ease-out; }
+        @keyframes flashSave { 0% { background-color: rgba(16,185,129,0.3); } 100% { background-color: transparent; } }
         
-        /* Tema claro */
-        body.light-theme .qty-input,
-        body.light-theme .price-input {
-            color: #000000 !important;
-            font-weight: 700;
-            background: rgba(0, 0, 0, 0.05) !important;
-        }
-        body.light-theme .margin-badge {
-            background: rgba(16, 185, 129, 0.15) !important;
-            color: #10b981 !important;
-        }
-        body.light-theme .negative-margin {
-            background: rgba(239, 68, 68, 0.15) !important;
-            color: #ef4444 !important;
-        }
-        body.light-theme .supplier-tag {
-            background: rgba(0, 0, 0, 0.08) !important;
-            color: #374151 !important;
-        }
-        body.light-theme .text-emerald-400,
-        body.light-theme .text-emerald-500,
-        body.light-theme .text-emerald-500\/70 {
-            color: #000000 !important;
-        }
-        body.light-theme .bg-emerald-500\/20 {
-            background-color: rgba(0, 0, 0, 0.05) !important;
-        }
-        body.light-theme .border-emerald-500\/40 {
-            border-color: rgba(0, 0, 0, 0.15) !important;
-        }
-        body.light-theme .btn-primary {
-            background: linear-gradient(105deg, #1f2937 0%, #111827 100%) !important;
-            color: white !important;
-        }
-        body.light-theme .btn-secondary {
-            background: linear-gradient(105deg, #3b82f6 0%, #2563eb 100%) !important;
-        }
-        body.light-theme .card-glass:hover {
-            border-color: rgba(0, 0, 0, 0.25) !important;
-        }
-        body.light-theme .focus\:border-emerald-500:focus {
-            border-color: #000000 !important;
-        }
-        body.light-theme .focus\:ring-emerald-500\/50:focus {
-            --tw-ring-color: rgba(0, 0, 0, 0.3) !important;
-        }
-        body.light-theme input[type="number"] {
-            color: #000000 !important;
-        }
-        body.light-theme .text-gray-400 {
-            color: #6b7280 !important;
-        }
-        body.light-theme .button-row button {
-            background: rgba(0, 0, 0, 0.05);
-            border-color: rgba(0, 0, 0, 0.15);
-            color: #4b5563;
-        }
-        body.light-theme .button-row button:hover {
-            background: rgba(16, 185, 129, 0.15);
-            border-color: #10b981;
-            color: #047857;
-        }
-        body.light-theme .btn-director {
-            background: rgba(37, 99, 235, 0.15);
-            border-color: rgba(37, 99, 235, 0.3);
-            color: #2563eb;
-        }
-        body.light-theme .btn-director:hover {
-            background: rgba(37, 99, 235, 0.25);
-            color: #1d4ed8;
-        }
-        body.light-theme .btn-reset-amber {
-            background: rgba(245, 158, 11, 0.15);
-            border-color: rgba(245, 158, 11, 0.3);
-            color: #d97706;
-        }
-        body.light-theme .btn-reset-red {
-            background: rgba(239, 68, 68, 0.15);
-            border-color: rgba(239, 68, 68, 0.3);
-            color: #dc2626;
-        }
+        .suppliers-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        @media (max-width: 500px) { .suppliers-grid { grid-template-columns: 1fr; } }
+        
+        body.light-theme .price-input, body.light-theme .qty-input { color: #000; font-weight: 700; background: rgba(0,0,0,0.05); }
+        body.light-theme .qty-control { background: rgba(0,0,0,0.08); }
+        body.light-theme .notification-dot { border-color: var(--header-bg); }
     </style>
 </head>
 <body class="min-h-screen pb-44 antialiased">
 
+<!-- PRELOADER SPLASH (3 segundos) -->
+<div id="preloader">
+    <div class="preloader-content">
+        <div class="burger-icon">🚚</div>
+        <div class="preloader-title brand-font">SMASH IT</div>
+        <div class="progress-container"><div class="progress-fill"></div></div>
+        <div class="preloader-sub"><i class="fas fa-chart-line"></i> Gestão de custos e fornecedores</div>
+    </div>
+</div>
+
 <header class="sticky top-0 z-50 backdrop-blur-2xl border-b border-white/10 shadow-lg" style="background: var(--header-bg);">
     <div class="app-container px-4 pt-5 pb-3">
-        <!-- Título -->
-        <div class="flex justify-between items-center flex-wrap gap-2">
+        <div class="flex justify-between items-center flex-wrap gap-2 mb-2">
             <div class="flex items-baseline gap-2">
                 <h1 class="text-3xl sm:text-4xl btn-primary px-3 py-1 rounded-2xl shadow-md brand-font tracking-wider">SMASH IT</h1>
-                <span class="text-[10px] font-bold text-emerald-500/80 uppercase">gestão, orçamento, fornecedores</span>
+                <span class="text-[10px] font-bold text-emerald-500/80 uppercase">gestão de custos e fornecedores</span>
             </div>
         </div>
-
-        <!-- PRIMEIRA LINHA HORIZONTAL DE BOTÕES -->
         <div class="button-row">
-            <button onclick="switchToCounterApp()" title="Alternar para Contagem de Stock">
-                <i class="fas fa-arrow-right-arrow-left"></i>
-            </button>
-            <button id="btn-theme-toggle" onclick="toggleTheme()" title="Alternar tema claro/escuro">
-                <i id="theme-icon" class="fas fa-moon"></i>
-            </button>
-            <button id="btn-edit-mode" onclick="toggleEditMode()" title="Modo gestão (editar categorias/itens)">
-                <i class="fas fa-cog"></i>
-            </button>
-            <button onclick="confirmClearPrices()" class="btn-reset-amber" title="Zerar preços e quantidades">
-                <i class="fas fa-eraser"></i>
-            </button>
-            <button onclick="confirmFullReset()" class="btn-reset-red" title="Redefinir tudo (reset completo)">
-                <i class="fas fa-arrow-rotate-left"></i>
+            <button onclick="switchToCounterApp()" title="Alternar para Contagem de Stock"><i class="fas fa-arrow-right-arrow-left"></i></button>
+            <button id="btn-theme-toggle" onclick="toggleTheme()" title="Alternar tema"><i id="theme-icon" class="fas fa-moon"></i></button>
+            <button id="btn-edit-mode" onclick="toggleEditMode()" title="Modo gestão"><i class="fas fa-cog"></i></button>
+            <button onclick="openCalculator()" title="Calculadora"><i class="fas fa-calculator"></i></button>
+            <button onclick="openSuppliersModal()" title="Fornecedores"><i class="fas fa-truck"></i></button>
+            <button onclick="generateAndSendPDF()" title="Gerar PDF"><i class="fas fa-file-pdf"></i></button>
+            <!-- Botão de itens minimizados (ocultos) com ponto vermelho -->
+            <button id="btn-hidden-items" onclick="showHiddenItemsModal()" class="relative" title="Itens e categorias minimizados">
+                <i class="fas fa-eye-slash"></i>
+                <span id="hidden-notification-dot" class="notification-dot"></span>
             </button>
         </div>
-
-        <!-- SEGUNDA LINHA HORIZONTAL DE BOTÕES -->
-        <div class="button-row">
-            <button onclick="exportData()" title="Exportar dados (JSON)">
-                <i class="fas fa-download"></i>
-            </button>
-            <button onclick="importData()" title="Importar dados (JSON)">
-                <i class="fas fa-upload"></i>
-            </button>
-            <button onclick="openCalculator()" title="Calculadora">
-                <i class="fas fa-calculator"></i>
-            </button>
-            <button onclick="openSuppliersModal()" title="Fornecedores">
-                <i class="fas fa-truck"></i>
-            </button>
-            <button onclick="generateAndSendPDF()" title="Gerar PDF">
-                <i class="fas fa-file-pdf"></i>
-            </button>
-            <button class="btn-director" onclick="sendDirectorReport()" title="Relatório para Diretoria">
-                <i class="fas fa-chart-line"></i>
-            </button>
-        </div>
-
-        <!-- Barra de pesquisa -->
-        <div class="relative mt-3">
+        <div class="relative mt-2">
             <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-500 text-sm"></i>
             <input type="text" id="search-input" oninput="render()" placeholder="🔎 Pesquisar item ou categoria..." class="w-full bg-white/5 border border-white/10 h-12 pl-12 pr-5 rounded-2xl outline-none text-sm focus:border-emerald-500" style="background: var(--input-bg); border-color: var(--input-border); color: var(--text-primary);">
         </div>
@@ -303,20 +302,35 @@
 
 <main class="app-container px-4 py-5 space-y-8">
     <div id="management-zone" class="hidden animate-in bg-emerald-500/5 border border-emerald-500/25 rounded-3xl p-5">
-        <div class="flex items-center gap-2 mb-3"><i class="fas fa-screwdriver-wrench text-emerald-400"></i><h3 class="text-emerald-400 text-[11px] font-black uppercase">Modo Gestão</h3></div>
-        <button onclick="openCategoryModal()" class="w-full bg-emerald-500 text-white font-extrabold py-3.5 rounded-xl text-xs uppercase flex items-center justify-center gap-2"><i class="fas fa-layer-group"></i> Criar nova categoria</button>
+        <div class="flex items-center gap-2 mb-3"><i class="fas fa-screwdriver-wrench text-emerald-400"></i><h3 class="text-emerald-400 text-[11px] font-black uppercase tracking-wider">MODO GESTÃO</h3></div>
+        <button onclick="openCategoryModal()" class="w-full bg-emerald-500 text-white font-extrabold py-3.5 rounded-xl text-xs uppercase flex items-center justify-center gap-2 shadow-md transition-all hover:bg-emerald-600"><i class="fas fa-layer-group"></i> Criar nova categoria</button>
+        <div class="management-buttons">
+            <button onclick="exportData()" class="btn-management-primary"><i class="fas fa-download"></i> Exportar dados (JSON)</button>
+            <button onclick="importData()" class="btn-management-primary"><i class="fas fa-upload"></i> Importar dados (JSON)</button>
+            <button onclick="confirmClearPrices()" class="btn-management-warning"><i class="fas fa-eraser"></i> Zerar custos e quantidades</button>
+            <button onclick="confirmFullReset()" class="btn-management-danger"><i class="fas fa-arrow-rotate-left"></i> Reset completo (fábrica)</button>
+        </div>
+        <p class="text-[10px] text-gray-400 text-center mt-4">✦ Gestão de categorias, itens e dados</p>
     </div>
+
     <div id="inventory-container" class="space-y-8"></div>
+    
     <div class="card-glass rounded-3xl p-5">
         <div class="flex items-center gap-3 mb-3"><div class="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center"><i class="fas fa-sticky-note text-emerald-400 text-[11px]"></i></div><label class="font-bold uppercase text-[10px] tracking-[0.2em] text-gray-400">Observações / Orçamento</label></div>
-        <textarea id="notes" rows="3" oninput="saveNotes()" class="w-full bg-black/40 border border-white/10 rounded-2xl p-4 focus:border-emerald-500/60 outline-none text-sm resize-none" style="background: var(--input-bg); border-color: var(--input-border); color: var(--text-primary);" placeholder="📝 Notas sobre preços, fornecedores, promoções..."></textarea>
+        <textarea id="notes" rows="3" oninput="saveNotes()" class="w-full bg-black/40 border border-white/10 rounded-2xl p-4 focus:border-emerald-500/60 outline-none text-sm resize-none" style="background: var(--input-bg); border-color: var(--input-border); color: var(--text-primary);" placeholder="📝 Notas sobre custos, fornecedores, promoções..."></textarea>
     </div>
 </main>
 
 <div class="fixed bottom-0 left-0 w-full p-4 sm:p-5 bg-gradient-to-t from-black via-black/95 to-transparent z-40" style="background: var(--footer-gradient);">
-    <div class="app-container flex gap-3">
-        <button onclick="sendWhatsAppReport()" class="flex-1 btn-primary font-bold h-12 sm:h-14 rounded-2xl text-[11px] sm:text-xs uppercase flex items-center justify-center gap-2"><i class="fab fa-whatsapp text-base sm:text-lg"></i> ENVIAR RESUMO</button>
-        <button onclick="sendDirectorReport()" class="flex-1 btn-secondary font-bold h-12 sm:h-14 rounded-2xl text-[11px] sm:text-xs uppercase flex items-center justify-center gap-2"><i class="fas fa-chart-line text-base sm:text-lg"></i> RELATÓRIO DIRETORIA</button>
+    <div class="app-container"><button onclick="sendWhatsAppReport()" class="w-full btn-primary font-bold h-12 sm:h-14 rounded-2xl text-[11px] sm:text-xs uppercase flex items-center justify-center gap-2"><i class="fab fa-whatsapp text-base sm:text-lg"></i> ENVIAR RESUMO</button></div>
+</div>
+
+<!-- Modal genérico -->
+<div id="modal-container" class="modal px-5">
+    <div class="card-glass p-6 rounded-[2.5rem] w-full max-w-sm border border-emerald-500/30">
+        <div class="text-center mb-2"><h3 id="modal-title" class="text-2xl font-black text-emerald-500 brand-font">Ação</h3><div class="w-12 h-0.5 bg-emerald-500/50 mx-auto mt-1"></div></div>
+        <div id="modal-content" class="space-y-5 my-4"></div>
+        <div class="flex gap-3 mt-4"><button onclick="closeModal()" class="flex-1 h-12 bg-white/10 rounded-xl font-bold text-gray-300 text-xs">Cancelar</button><button id="modal-confirm" class="flex-1 btn-primary h-12 rounded-xl font-bold text-xs">Confirmar</button></div>
     </div>
 </div>
 
@@ -324,7 +338,7 @@
 <div id="calculator-modal" class="modal px-5">
     <div class="card-glass p-6 rounded-[2.5rem] w-full max-w-sm">
         <div class="text-center mb-4"><h3 class="text-2xl font-black text-emerald-500 brand-font">Calculadora</h3></div>
-        <input type="text" id="calc-display" readonly class="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-right text-2xl font-bold mb-4" style="color: var(--text-primary);">
+        <div id="calc-display" class="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-right text-2xl font-bold mb-4 font-mono break-words min-h-[70px]" style="color: var(--text-primary);">0</div>
         <div class="grid grid-cols-4 gap-2">
             <button onclick="calcAppend('7')" class="bg-white/10 p-3 rounded-xl font-bold">7</button><button onclick="calcAppend('8')" class="bg-white/10 p-3 rounded-xl font-bold">8</button><button onclick="calcAppend('9')" class="bg-white/10 p-3 rounded-xl font-bold">9</button><button onclick="calcAppend('/')" class="bg-emerald-500/20 p-3 rounded-xl font-bold">÷</button>
             <button onclick="calcAppend('4')" class="bg-white/10 p-3 rounded-xl font-bold">4</button><button onclick="calcAppend('5')" class="bg-white/10 p-3 rounded-xl font-bold">5</button><button onclick="calcAppend('6')" class="bg-white/10 p-3 rounded-xl font-bold">6</button><button onclick="calcAppend('*')" class="bg-emerald-500/20 p-3 rounded-xl font-bold">×</button>
@@ -332,35 +346,37 @@
             <button onclick="calcAppend('0')" class="bg-white/10 p-3 rounded-xl font-bold">0</button><button onclick="calcAppend('.')" class="bg-white/10 p-3 rounded-xl font-bold">.</button><button onclick="calcResult()" class="bg-emerald-500 p-3 rounded-xl font-bold text-black">=</button><button onclick="calcAppend('+')" class="bg-emerald-500/20 p-3 rounded-xl font-bold">+</button>
             <button onclick="calcClear()" class="col-span-2 bg-red-500/30 p-3 rounded-xl font-bold">C</button><button onclick="calcBackspace()" class="col-span-2 bg-amber-500/30 p-3 rounded-xl font-bold">⌫</button>
         </div>
-        <button onclick="closeCalculator()" class="w-full mt-4 bg-white/10 py-2 rounded-xl text-sm">Fechar</button>
+        <button id="paste-to-last-price" onclick="pasteToLastPrice()" class="w-full mt-3 bg-emerald-500/30 py-2 rounded-xl text-sm font-bold">📋 Colar resultado no último custo editado</button>
+        <button onclick="closeCalculator()" class="w-full mt-2 bg-white/10 py-2 rounded-xl text-sm">Fechar</button>
     </div>
 </div>
 
 <!-- Modal Fornecedores -->
 <div id="suppliers-modal" class="modal px-5">
-    <div class="card-glass p-6 rounded-[2.5rem] w-full max-w-md max-h-[80vh] overflow-y-auto">
+    <div class="card-glass p-6 rounded-[2.5rem] w-full max-w-2xl max-h-[85vh] overflow-y-auto">
         <div class="flex justify-between items-center mb-4"><h3 class="text-2xl font-black text-emerald-500 brand-font">Fornecedores</h3><button onclick="closeSuppliersModal()" class="text-gray-400 text-xl">&times;</button></div>
-        <div id="suppliers-list" class="space-y-3 mb-4"></div>
-        <div class="border-t border-white/10 pt-4"><h4 class="font-bold mb-2">Adicionar Fornecedor</h4><input type="text" id="supplier-name" placeholder="Nome" class="w-full bg-black/40 border border-white/10 rounded-xl p-2 mb-2"><input type="text" id="supplier-contact" placeholder="Contato (tel/email)" class="w-full bg-black/40 border border-white/10 rounded-xl p-2 mb-2"><input type="text" id="supplier-product" placeholder="Produto fornecido" class="w-full bg-black/40 border border-white/10 rounded-xl p-2 mb-2"><input type="number" id="supplier-price" placeholder="Preço (€)" class="w-full bg-black/40 border border-white/10 rounded-xl p-2 mb-3" step="0.01"><button onclick="addSupplier()" class="w-full bg-emerald-500 text-white py-2 rounded-xl font-bold">Adicionar</button></div>
+        <input type="text" id="supplier-search" placeholder="🔎 Buscar fornecedor..." class="w-full bg-black/40 border border-white/10 rounded-xl p-3 mb-4" style="color: var(--text-primary);">
+        <div id="suppliers-list" class="suppliers-grid mb-6"></div>
+        <div class="border-t border-white/10 pt-4"><h4 class="font-bold mb-2">➕ Adicionar Fornecedor</h4><div class="grid grid-cols-1 sm:grid-cols-2 gap-2"><input type="text" id="supplier-name" placeholder="Nome" class="bg-black/40 border border-white/10 rounded-xl p-2"><input type="text" id="supplier-contact" placeholder="Contato" class="bg-black/40 border border-white/10 rounded-xl p-2"><input type="text" id="supplier-product" placeholder="Produto fornecido" class="bg-black/40 border border-white/10 rounded-xl p-2"><input type="number" id="supplier-price" placeholder="Preço (€)" class="bg-black/40 border border-white/10 rounded-xl p-2" step="0.01"></div><button onclick="addSupplier()" class="w-full mt-3 bg-emerald-500 text-white py-2 rounded-xl font-bold">Adicionar Fornecedor</button></div>
     </div>
 </div>
 
 <script>
     const DEFAULT_CATEGORIES_RAW = [
-    { id: 101, name: "🍔 Pães Artesanais", items: ["Pão Batata", "Pão Pimenta", "Pão Esmagadinho"] },
-    { id: 102, name: "🥩 Proteínas Smash", items: ["Carne kg", "Frango kg", "Bacon Pacote", "Presunto Pacote", "Ovos Bandeja"] },
-    { id: 103, name: "🥬 Frescos & Veg", items: ["Alface", "Tomate Unidade", "Cebola", "Pepino", "Veggie", "Futuro"] },
-    { id: 104, name: "🧀 Queijos e Molhos", items: ["Cheddar Caixa", "Prato Caixa", "Mussarela Barra"] },
-    { id: 105, name: "🍟 Acompanhamentos", items: ["Batata Palito Pacote", "Batata Canoa Pacote", "Batata Doce kg"] },
-    { id: 106, name: "🍮 Sobremesas", items: ["Pudim Brullet", "Brownie"] },
-    { id: 107, name: "🧂 Temperos & Extras", items: ["Manteiga Barra", "Óleo Caixa", "Óleo Balde", "Sal 1kg", "Pimenta", "Alho", "Cebolinha", "Salsa"] },
-    { id: 108, name: "🥤 Bebidas", items: ["Água Mineral", "Refrigerante Lata", "Suco Natural", "Cerveja Long Neck", "Energético"] },
-    { id: 109, name: "🧼 Materiais de Limpeza", items: ["Detergente", "Desinfetante", "Álcool", "Papel Toalha", "Saco de Lixo"] },
-    { id: 110, name: "🎁 Brindes", items: ["Caneta", "Chaveiro", "Boné", "Camiseta", "Ímã"] },
-    { id: 111, name: "📢 Material Promocional", items: ["Flyer A5", "Cartaz A3", "Standee", "Adesivo", "Display de Mesa"] },
-    { id: 112, name: "📦 Embalagens", items: ["Caixa para Hamburguer", "Saco Kraft", "Embalagem Plástica", "Papel Manteiga", "Tampa para Copo"] },
-    { id: 113, name: "♻️ Descartáveis", items: ["Copo 200ml", "Prato de Papel", "Garfo Faca", "Guardanapo", "Palito"] }
-];
+        { id: 101, name: "🍔 Pães Artesanais", items: ["Pão Batata", "Pão Pimenta", "Pão Esmagadinho"] },
+        { id: 102, name: "🥩 Proteínas Smash", items: ["Carne kg", "Frango kg", "Bacon Pacote", "Presunto Pacote", "Ovos Bandeja"] },
+        { id: 103, name: "🥬 Frescos & Veg", items: ["Alface", "Tomate Unidade", "Cebola", "Pepino", "Veggie", "Futuro"] },
+        { id: 104, name: "🧀 Queijos e Molhos", items: ["Cheddar Caixa", "Prato Caixa", "Mussarela Barra"] },
+        { id: 105, name: "🍟 Acompanhamentos", items: ["Batata Palito Pacote", "Batata Canoa Pacote", "Batata Doce kg"] },
+        { id: 106, name: "🍮 Sobremesas", items: ["Pudim Brullet", "Brownie"] },
+        { id: 107, name: "🧂 Temperos & Extras", items: ["Manteiga Barra", "Óleo Caixa", "Óleo Balde", "Sal 1kg", "Pimenta", "Alho", "Cebolinha", "Salsa"] },
+        { id: 108, name: "🥤 Bebidas", items: ["Água Mineral", "Refrigerante Lata", "Suco Natural", "Cerveja Long Neck", "Energético"] },
+        { id: 109, name: "🧼 Materiais de Limpeza", items: ["Detergente", "Desinfetante", "Álcool", "Papel Toalha", "Saco de Lixo"] },
+        { id: 110, name: "🎁 Brindes", items: ["Caneta", "Chaveiro", "Boné", "Camiseta", "Ímã"] },
+        { id: 111, name: "📢 Material Promocional", items: ["Flyer A5", "Cartaz A3", "Standee", "Adesivo", "Display de Mesa"] },
+        { id: 112, name: "📦 Embalagens", items: ["Caixa para Hamburguer", "Saco Kraft", "Embalagem Plástica", "Papel Manteiga", "Tampa para Copo"] },
+        { id: 113, name: "♻️ Descartáveis", items: ["Copo 200ml", "Prato de Papel", "Garfo Faca", "Guardanapo", "Palito"] }
+    ];
 
     function convertToFullFormat(categories) {
         return categories.map(cat => ({
@@ -368,12 +384,11 @@
             name: cat.name,
             visible: cat.visible !== undefined ? cat.visible : true,
             items: (cat.items || []).map(item => {
-                if (typeof item === 'string') return { name: item, visible: true, costPrice: 0, salePrice: 0, quantity: 0, supplierId: null };
+                if (typeof item === 'string') return { name: item, visible: true, costPrice: 0, quantity: 0, supplierId: null };
                 return { 
                     name: item.name, 
                     visible: item.visible !== undefined ? item.visible : true, 
                     costPrice: item.costPrice || 0, 
-                    salePrice: item.salePrice || 0, 
                     quantity: item.quantity || 0,
                     supplierId: item.supplierId !== undefined ? item.supplierId : null
                 };
@@ -381,233 +396,162 @@
         }));
     }
 
-    let inventory = [];
-    let isEditMode = false;
-    let suppliers = [];
+    let inventory = [], isEditMode = false, suppliers = [], lastEditedField = null;
 
     function loadData() {
         let stored = localStorage.getItem('smash_prices_full');
-        if (stored) {
-            try { inventory = convertToFullFormat(JSON.parse(stored)); } catch(e) { inventory = convertToFullFormat(DEFAULT_CATEGORIES_RAW); }
-        } else { inventory = convertToFullFormat(DEFAULT_CATEGORIES_RAW); }
+        if (stored) { try { inventory = convertToFullFormat(JSON.parse(stored)); } catch(e) { inventory = convertToFullFormat(DEFAULT_CATEGORIES_RAW); } }
+        else { inventory = convertToFullFormat(DEFAULT_CATEGORIES_RAW); }
         let supp = localStorage.getItem('smash_suppliers');
         if (supp) suppliers = JSON.parse(supp); else suppliers = [];
     }
     function persistData() { 
         localStorage.setItem('smash_prices_full', JSON.stringify(inventory)); 
         localStorage.setItem('smash_suppliers', JSON.stringify(suppliers));
-        if (window.broadcastChannel) window.broadcastChannel.postMessage({ type: 'DATA_UPDATED' });
     }
     function saveNotes() { localStorage.setItem('smash_notes_prices', document.getElementById('notes').value); }
     function loadNotes() { let n = localStorage.getItem('smash_notes_prices'); if(n !== null) document.getElementById('notes').value = n; }
 
-    function exportData() {
-        const exportObj = { inventory, suppliers, notes: document.getElementById('notes').value, version: '1.0' };
-        const dataStr = JSON.stringify(exportObj, null, 2);
-        const blob = new Blob([dataStr], {type: 'application/json'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `smash_data_${new Date().toISOString().slice(0,19)}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    }
+    function flashElement(el) { if(el) { el.classList.add('flash-save'); setTimeout(() => el.classList.remove('flash-save'), 600); } }
 
-    function importData() {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'application/json';
-        input.onchange = (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                try {
-                    const imported = JSON.parse(ev.target.result);
-                    if (imported.inventory && imported.suppliers !== undefined) {
-                        inventory = convertToFullFormat(imported.inventory);
-                        suppliers = imported.suppliers;
-                        if (imported.notes !== undefined) document.getElementById('notes').value = imported.notes;
-                        persistData();
-                        render();
-                        alert('Dados importados com sucesso! A página será recarregada para aplicar todas as alterações.');
-                        location.reload();
-                    } else { alert('Arquivo inválido.'); }
-                } catch(err) { alert('Erro ao ler o arquivo: ' + err.message); }
-            };
-            reader.readAsText(file);
-        };
-        input.click();
+    function updatePrice(catId, itemName, value, el) {
+        let cat = inventory.find(c => c.id === catId);
+        if(cat) { let item = cat.items.find(i => i.name === itemName);
+            if(item) { let num = parseFloat(value); if(isNaN(num)) num=0; item.costPrice = Math.max(0, num); persistData(); render(); flashElement(el); }
+        }
     }
-
-    function toggleEditMode() {
-        isEditMode = !isEditMode;
-        document.getElementById('btn-edit-mode').classList.toggle('edit-active');
-        document.getElementById('management-zone').classList.toggle('hidden');
-        render();
+    function updateQuantity(catId, itemName, delta, inputEl) {
+        let cat = inventory.find(c => c.id === catId);
+        if(cat) { let item = cat.items.find(i => i.name === itemName);
+            if(item) { let newVal = Math.max(0, (item.quantity || 0) + delta); item.quantity = newVal; persistData(); if(inputEl) inputEl.value = newVal; render(); flashElement(inputEl); }
+        }
     }
-
-    function toggleCategoryVisibility(catId) { let cat = inventory.find(c => c.id === catId); if(cat) { cat.visible = !cat.visible; persistData(); render(); } }
-    function toggleItemVisibility(catId, itemName) { let cat = inventory.find(c => c.id === catId); if(cat) { let item = cat.items.find(i => i.name === itemName); if(item) { item.visible = !item.visible; persistData(); render(); } } }
-    function updatePrice(catId, itemName, field, value) { let cat = inventory.find(c => c.id === catId); if(cat) { let item = cat.items.find(i => i.name === itemName); if(item) { let num = parseFloat(value); if(isNaN(num)) num=0; item[field]=Math.max(0,num); persistData(); render(); } } }
-    function updateQuantity(catId, itemName, value) { let cat = inventory.find(c => c.id === catId); if(cat) { let item = cat.items.find(i => i.name === itemName); if(item) { let num = parseInt(value); if(isNaN(num)) num=0; item.quantity = Math.max(0,num); persistData(); render(); } } }
     function updateSupplier(catId, itemName, supplierId) { let cat = inventory.find(c => c.id === catId); if(cat) { let item = cat.items.find(i => i.name === itemName); if(item) { item.supplierId = supplierId === "" ? null : parseInt(supplierId); persistData(); render(); } } }
-    function calculateMargin(cost, sale) { if(cost<=0) return sale>0?100:0; return ((sale-cost)/cost)*100; }
     function getSupplierName(id) { let s = suppliers.find(sup => sup.id === id); return s ? s.name : "Não associado"; }
     function getSupplierPrice(id) { let s = suppliers.find(sup => sup.id === id); return s ? s.price : 0; }
 
+    let searchTerm = '';
     function render() {
         const container = document.getElementById('inventory-container');
         if (!container) return;
-        const searchTerm = document.getElementById('search-input')?.value.toLowerCase().trim() || '';
+        searchTerm = document.getElementById('search-input')?.value.toLowerCase().trim() || '';
         container.innerHTML = '';
         inventory.forEach(category => {
-            let filteredItems = category.items.filter(item => item.name.toLowerCase().includes(searchTerm) || category.name.toLowerCase().includes(searchTerm));
-            if (category.name.toLowerCase().includes(searchTerm) && filteredItems.length === 0) filteredItems = [...category.items];
+            if (!category.visible) return; // categorias ocultas não aparecem
+            let filteredItems = category.items.filter(item => item.visible && (item.name.toLowerCase().includes(searchTerm) || category.name.toLowerCase().includes(searchTerm)));
+            if ((!searchTerm || category.name.toLowerCase().includes(searchTerm)) && filteredItems.length === 0) filteredItems = category.items.filter(i => i.visible);
             if (filteredItems.length === 0) return;
             const catDiv = document.createElement('div'); catDiv.className = 'animate-in space-y-3';
             const eyeIconCat = category.visible ? 'fa-eye' : 'fa-eye-slash';
             let headerHtml = `<div class="flex justify-between items-center px-1 pb-1 flex-wrap gap-2"><div class="flex items-center gap-2"><i class="fas fa-tag text-emerald-500/70 text-[10px]"></i><h2 class="text-emerald-500 font-extrabold uppercase text-[11px]">${escapeHtml(category.name)}</h2><button onclick="toggleCategoryVisibility(${category.id})" class="eye-btn text-gray-400"><i class="fas ${eyeIconCat} text-xs"></i></button></div>`;
             if (isEditMode) headerHtml += `<div class="flex gap-3 text-[9px] font-black"><button onclick="openItemModal(${category.id})" class="text-emerald-400"><i class="fas fa-plus-circle"></i> Item</button><button onclick="openCategoryModal(${category.id})" class="text-blue-400"><i class="fas fa-pen"></i></button><button onclick="confirmDeleteCategory(${category.id})" class="text-red-400"><i class="fas fa-trash-can"></i></button></div>`;
             headerHtml += `</div>`;
-            let itemsHtml = `<div class="grid gap-2.5">`;
+            let itemsHtml = `<div class="grid gap-3">`;
             filteredItems.forEach(item => {
-                const margin = calculateMargin(item.costPrice, item.salePrice);
-                const marginClass = margin >= 0 ? 'margin-badge' : 'margin-badge negative-margin';
                 const itemEyeIcon = item.visible ? 'fa-eye' : 'fa-eye-slash';
                 const supplierName = getSupplierName(item.supplierId);
                 const supplierPrice = getSupplierPrice(item.supplierId);
                 let supplierHtml = `<div class="supplier-tag"><i class="fas fa-truck text-[9px]"></i>`;
-                if (item.supplierId === null) {
-                    supplierHtml += `<span>Não associado</span>
-                        <button onclick="openSupplierSelectModal(${category.id}, '${escapeHtml(item.name)}', null)" class="text-[10px] bg-emerald-500/30 hover:bg-emerald-500/50 transition-all px-2 py-0.5 rounded-full flex items-center gap-1"><i class="fas fa-link text-[9px]"></i> Associar</button>`;
-                } else {
-                    supplierHtml += `${escapeHtml(supplierName)} ${supplierPrice > 0 ? `(€${supplierPrice.toFixed(2)})` : ''}`;
-                    if (isEditMode) {
-                        supplierHtml += `<button onclick="openSupplierSelectModal(${category.id}, '${escapeHtml(item.name)}', ${item.supplierId})" class="ml-1 text-[10px] text-blue-400 hover:bg-white/10 rounded-full px-1"><i class="fas fa-exchange-alt"></i></button>`;
-                    }
-                }
+                if (item.supplierId === null) { supplierHtml += `<span>Não associado</span><button onclick="openSupplierSelectModal(${category.id}, '${escapeHtml(item.name)}', null)" class="text-[10px] bg-emerald-500/30 hover:bg-emerald-500/50 transition-all px-2 py-1 rounded-full flex items-center gap-1"><i class="fas fa-link text-[9px]"></i> Associar</button>`; }
+                else { supplierHtml += `${escapeHtml(supplierName)} ${supplierPrice > 0 ? `(€${supplierPrice.toFixed(2)})` : ''}${isEditMode ? `<button onclick="openSupplierSelectModal(${category.id}, '${escapeHtml(item.name)}', ${item.supplierId})" class="ml-1 text-[10px] text-blue-400 hover:bg-white/10 rounded-full px-1"><i class="fas fa-exchange-alt"></i></button>` : ''}`; }
                 supplierHtml += `</div>`;
-                itemsHtml += `
-                    <div class="card-glass p-3 rounded-2xl">
-                        <div class="flex flex-col sm:flex-row sm:items-center gap-2">
-                            <div class="flex items-center gap-2 flex-1 min-w-[100px]"><span class="font-semibold text-[14px] break-words">${escapeHtml(item.name)}</span><button onclick="toggleItemVisibility(${category.id}, '${escapeHtml(item.name)}')" class="eye-btn text-gray-400"><i class="fas ${itemEyeIcon} text-[10px]"></i></button></div>
-                            <div class="flex flex-wrap items-center gap-2 justify-start sm:justify-end">
-                                <div><span class="text-[9px] text-gray-400">Qtd</span><input type="number" value="${item.quantity}" onchange="updateQuantity(${category.id}, '${escapeHtml(item.name)}', this.value)" class="qty-input bg-black/30 rounded-lg px-2 py-1 text-emerald-400 font-bold text-sm text-center" min="0"></div>
-                                <div><span class="text-[9px] text-gray-400">Custo</span><input type="number" value="${item.costPrice.toFixed(2)}" onchange="updatePrice(${category.id}, '${escapeHtml(item.name)}', 'costPrice', this.value)" class="price-input bg-black/30 rounded-lg px-2 py-1 text-emerald-400 font-bold text-sm text-center" step="0.01"></div>
-                                <div><span class="text-[9px] text-gray-400">Venda</span><input type="number" value="${item.salePrice.toFixed(2)}" onchange="updatePrice(${category.id}, '${escapeHtml(item.name)}', 'salePrice', this.value)" class="price-input bg-black/30 rounded-lg px-2 py-1 text-emerald-400 font-bold text-sm text-center" step="0.01"></div>
-                                <div><span class="text-[9px] text-gray-400">Margem</span><span class="${marginClass}">${margin.toFixed(1)}%</span></div>
-                            </div>
-                        </div>
-                        <div class="mt-2 flex flex-wrap justify-between items-center gap-2">
-                            ${supplierHtml}
-                        </div>
-                        ${isEditMode ? `<div class="flex justify-end gap-3 mt-2 pt-1 border-t border-white/10"><button onclick="openItemModal(${category.id}, '${escapeHtml(item.name)}')" class="text-[9px] font-black text-blue-400">✎ Renomear</button><button onclick="confirmDeleteItem(${category.id}, '${escapeHtml(item.name)}')" class="text-[9px] font-black text-red-400">🗑 Remover</button></div>` : ''}
-                    </div>`;
+                itemsHtml += `<div class="card-glass p-4 rounded-2xl"><div class="flex flex-col sm:flex-row sm:items-center gap-2"><div class="flex items-center gap-2 flex-1"><span class="font-semibold text-[15px] break-words">${escapeHtml(item.name)}</span><button onclick="toggleItemVisibility(${category.id}, '${escapeHtml(item.name)}')" class="eye-btn text-gray-400"><i class="fas ${itemEyeIcon} text-[10px]"></i></button>${isEditMode ? `<div class="flex gap-1"><button onclick="openItemModal(${category.id}, '${escapeHtml(item.name)}')" class="text-blue-400 text-xs"><i class="fas fa-pen"></i></button><button onclick="confirmDeleteItem(${category.id}, '${escapeHtml(item.name)}')" class="text-red-400 text-xs"><i class="fas fa-trash"></i></button></div>` : ''}</div><div class="flex flex-wrap items-center gap-3 justify-end"><div><span class="text-[9px] text-gray-400">Qtd</span><div class="qty-control"><button onclick="updateQuantity(${category.id}, '${escapeHtml(item.name)}', -1, this.parentElement.querySelector('input'))">-</button><input type="number" value="${item.quantity}" onchange="updateQuantity(${category.id}, '${escapeHtml(item.name)}', (this.value - item.quantity), this)" class="qty-input" min="0" step="1"><button onclick="updateQuantity(${category.id}, '${escapeHtml(item.name)}', 1, this.parentElement.querySelector('input'))">+</button></div></div><div><span class="text-[9px] text-gray-400">Custo (€)</span><input type="number" value="${item.costPrice.toFixed(2)}" onchange="updatePrice(${category.id}, '${escapeHtml(item.name)}', this.value, this)" class="price-input" step="0.01"></div></div></div><div class="mt-2 flex flex-wrap justify-between items-center gap-2">${supplierHtml}</div></div>`;
             });
             itemsHtml += `</div>`;
             catDiv.innerHTML = headerHtml + itemsHtml;
             container.appendChild(catDiv);
         });
-        if (container.children.length === 0) container.innerHTML = `<div class="text-center py-12 text-gray-400 text-sm card-glass rounded-3xl p-8"><i class="fas fa-box-open text-4xl mb-3 opacity-50"></i><p>Nenhum item encontrado.</p></div>`;
+        if (container.children.length === 0) container.innerHTML = `<div class="text-center py-12 text-gray-400 text-sm card-glass rounded-3xl p-8"><i class="fas fa-box-open text-4xl mb-3 opacity-50"></i><p>Nenhum item visível encontrado.</p><p class="text-xs mt-2">🔍 Use o botão 👁️ para mostrar itens ocultos.</p></div>`;
+        updateHiddenNotification();
+    }
+
+    function updateHiddenNotification() {
+        const dot = document.getElementById('hidden-notification-dot');
+        if (!dot) return;
+        let hasHidden = false;
+        for (const cat of inventory) {
+            if (!cat.visible) { hasHidden = true; break; }
+            for (const item of cat.items) {
+                if (!item.visible) { hasHidden = true; break; }
+            }
+            if (hasHidden) break;
+        }
+        dot.style.display = hasHidden ? 'block' : 'none';
+    }
+
+    function showHiddenItemsModal() {
+        const hiddenCategories = inventory.filter(c => !c.visible);
+        const hiddenItems = [];
+        inventory.forEach(cat => {
+            cat.items.forEach(item => {
+                if (!item.visible) hiddenItems.push({ catId: cat.id, catName: cat.name, itemName: item.name });
+            });
+        });
+        if (hiddenCategories.length === 0 && hiddenItems.length === 0) {
+            document.getElementById('modal-title').innerText = '📦 Minimizados';
+            document.getElementById('modal-content').innerHTML = `<div class="text-center py-6"><i class="fas fa-check-circle text-3xl text-green-400 mb-3"></i><p class="text-sm">Não há itens ou categorias minimizados.</p><p class="text-xs text-gray-400 mt-2">Toque no ícone de olho ao lado de categorias ou itens para ocultar.</p></div>`;
+            document.getElementById('modal-confirm').innerText = 'Fechar';
+            document.getElementById('modal-confirm').onclick = () => closeModal();
+            openModal();
+            return;
+        }
+        let html = `<div class="space-y-4"><p class="text-xs text-center text-gray-400">👁️ Itens/categorias com olho fechado estão minimizados (ocultos da tela principal).</p>`;
+        if (hiddenCategories.length) {
+            html += `<div><div class="text-[11px] font-bold text-emerald-500 uppercase tracking-wider mb-2 flex items-center gap-2"><i class="fas fa-layer-group"></i>Categorias minimizadas</div>`;
+            hiddenCategories.forEach(cat => {
+                html += `<div class="flex justify-between items-center bg-black/20 dark:bg-white/5 p-3 rounded-xl mb-2"><span class="text-sm font-medium">${escapeHtml(cat.name)}</span><button onclick="restoreCategoryVisibility(${cat.id})" class="bg-emerald-500/30 hover:bg-emerald-500/50 px-3 py-1 rounded-full text-xs font-bold transition"><i class="fas fa-eye mr-1"></i>Tornar visível</button></div>`;
+            });
+            html += `</div>`;
+        }
+        if (hiddenItems.length) {
+            html += `<div><div class="text-[11px] font-bold text-emerald-500 uppercase tracking-wider mb-2 flex items-center gap-2 mt-2"><i class="fas fa-box"></i>Itens minimizados</div>`;
+            hiddenItems.forEach(item => {
+                html += `<div class="flex justify-between items-center bg-black/20 dark:bg-white/5 p-3 rounded-xl mb-2"><div><span class="text-sm font-medium">${escapeHtml(item.itemName)}</span><br><span class="text-[10px] text-gray-400">${escapeHtml(item.catName)}</span></div><button onclick="restoreItemVisibility(${item.catId}, '${escapeHtml(item.itemName)}')" class="bg-emerald-500/30 hover:bg-emerald-500/50 px-3 py-1 rounded-full text-xs font-bold transition"><i class="fas fa-eye mr-1"></i>Mostrar</button></div>`;
+            });
+            html += `</div>`;
+        }
+        html += `</div>`;
+        document.getElementById('modal-title').innerText = '🗂️ Minimizados (Ocultos)';
+        document.getElementById('modal-content').innerHTML = html;
+        document.getElementById('modal-confirm').innerText = 'Fechar';
+        document.getElementById('modal-confirm').onclick = () => closeModal();
+        openModal();
+    }
+
+    function restoreCategoryVisibility(catId) {
+        const cat = inventory.find(c => c.id === catId);
+        if (cat) { cat.visible = true; persistData(); render(); }
+        closeModal();
+        showHiddenItemsModal();
+    }
+    function restoreItemVisibility(catId, itemName) {
+        const cat = inventory.find(c => c.id === catId);
+        if (cat) {
+            const item = cat.items.find(i => i.name === itemName);
+            if (item) { item.visible = true; persistData(); render(); }
+        }
+        closeModal();
+        showHiddenItemsModal();
     }
 
     function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => m==='&'?'&amp;':m==='<'?'&lt;':'&gt;'); }
+    function toggleCategoryVisibility(catId) { let cat = inventory.find(c => c.id === catId); if(cat) { cat.visible = !cat.visible; persistData(); render(); } }
+    function toggleItemVisibility(catId, itemName) { let cat = inventory.find(c => c.id === catId); if(cat) { let item = cat.items.find(i => i.name === itemName); if(item) { item.visible = !item.visible; persistData(); render(); } } }
+    function toggleEditMode() { isEditMode = !isEditMode; document.getElementById('btn-edit-mode').classList.toggle('edit-active'); document.getElementById('management-zone').classList.toggle('hidden'); render(); }
 
-    function openSupplierSelectModal(catId, itemName, currentSupplierId) {
-        let options = '<option value="">Nenhum</option>';
-        suppliers.forEach(s => { options += `<option value="${s.id}" ${currentSupplierId === s.id ? 'selected' : ''}>${escapeHtml(s.name)} (€${s.price.toFixed(2)})</option>`; });
-        document.getElementById('modal-title').innerText = '🔗 Associar Fornecedor';
-        document.getElementById('modal-content').innerHTML = `<select id="supplier-select" class="w-full h-14 bg-black/40 border border-white/15 px-5 rounded-xl text-white">${options}</select>`;
-        document.getElementById('modal-confirm').onclick = () => {
-            let selected = document.getElementById('supplier-select').value;
-            updateSupplier(catId, itemName, selected === "" ? null : parseInt(selected));
-            closeModal();
-        };
-        openModal();
-    }
-
-    function confirmClearPrices() {
-        document.getElementById('modal-title').innerText = '🧹 Zerar Preços e Quantidades';
-        document.getElementById('modal-content').innerHTML = `<div class="text-center"><i class="fas fa-broom-ball text-3xl text-amber-400"></i><p class="text-sm mt-2">Zerar todos os preços e quantidades?</p></div>`;
-        document.getElementById('modal-confirm').onclick = () => { inventory.forEach(cat => cat.items.forEach(item => { item.costPrice=0; item.salePrice=0; item.quantity=0; })); persistData(); render(); closeModal(); };
-        openModal();
-    }
-    function confirmFullReset() {
-        document.getElementById('modal-title').innerText = '⚠️ RESET COMPLETO';
-        document.getElementById('modal-content').innerHTML = `<div class="text-center"><i class="fas fa-database text-3xl text-red-500"></i><p class="text-sm mt-2">Restaurar configurações originais?</p></div>`;
-        document.getElementById('modal-confirm').onclick = () => { inventory = convertToFullFormat(DEFAULT_CATEGORIES_RAW); suppliers = []; document.getElementById('notes').value = ''; localStorage.setItem('smash_notes_prices', ''); persistData(); render(); closeModal(); };
-        openModal();
-    }
-    function openModal() { document.getElementById('modal-container').classList.add('active'); }
-    function closeModal() { document.getElementById('modal-container').classList.remove('active'); }
-
-    function openCategoryModal(catId = null) {
-        const category = catId ? inventory.find(c => c.id === catId) : null;
-        document.getElementById('modal-title').innerText = catId ? '✏️ Editar Categoria' : '➕ Nova Categoria';
-        document.getElementById('modal-content').innerHTML = `<input type="text" id="modal-input" value="${category ? escapeHtml(category.name) : ''}" class="w-full h-14 bg-black/40 border border-white/15 px-5 rounded-xl text-white" placeholder="Nome da categoria">`;
-        document.getElementById('modal-confirm').onclick = () => {
-            let newName = document.getElementById('modal-input').value.trim();
-            if(!newName) return;
-            if(catId) category.name = newName;
-            else inventory.push({ id: Date.now(), name: newName, visible: true, items: [{ name: "Produto 1", visible: true, costPrice:0, salePrice:0, quantity:0, supplierId:null }, { name: "Produto 2", visible: true, costPrice:0, salePrice:0, quantity:0, supplierId:null }, { name: "Produto 3", visible: true, costPrice:0, salePrice:0, quantity:0, supplierId:null }] });
-            persistData(); closeModal(); render();
-        };
-        openModal();
-    }
-    function openItemModal(catId, oldItemName = null) {
-        const category = inventory.find(c => c.id === catId);
-        if(!category) return;
-        const isEditing = (oldItemName !== null);
-        document.getElementById('modal-title').innerText = isEditing ? '✏️ Renomear Item' : '✨ Adicionar Item';
-        document.getElementById('modal-content').innerHTML = `<input type="text" id="modal-input" value="${isEditing ? escapeHtml(oldItemName) : ''}" class="w-full h-14 bg-black/40 border border-white/15 px-5 rounded-xl text-white" placeholder="Nome do item">`;
-        document.getElementById('modal-confirm').onclick = () => {
-            let newName = document.getElementById('modal-input').value.trim();
-            if(!newName) return;
-            if(isEditing) { let item = category.items.find(i => i.name === oldItemName); if(item) item.name = newName; }
-            else { if(!category.items.some(i => i.name === newName)) category.items.push({ name: newName, visible: true, costPrice:0, salePrice:0, quantity:0, supplierId:null }); }
-            persistData(); closeModal(); render();
-        };
-        openModal();
-    }
-    function confirmDeleteCategory(catId) {
-        let cat = inventory.find(c => c.id === catId);
-        document.getElementById('modal-title').innerText = '⚠️ Apagar Categoria';
-        document.getElementById('modal-content').innerHTML = `<p>Remover <strong>${escapeHtml(cat.name)}</strong>?</p>`;
-        document.getElementById('modal-confirm').onclick = () => { inventory = inventory.filter(c => c.id !== catId); persistData(); closeModal(); render(); };
-        openModal();
-    }
-    function confirmDeleteItem(catId, itemName) {
-        document.getElementById('modal-title').innerText = '❌ Remover Item';
-        document.getElementById('modal-content').innerHTML = `<p>Excluir <strong>${escapeHtml(itemName)}</strong>?</p>`;
-        document.getElementById('modal-confirm').onclick = () => {
-            let category = inventory.find(c => c.id === catId);
-            if(category) { category.items = category.items.filter(i => i.name !== itemName); persistData(); }
-            closeModal(); render();
-        };
-        openModal();
-    }
-
-    let calcExpression = '';
-    function openCalculator() { document.getElementById('calculator-modal').classList.add('active'); }
-    function closeCalculator() { document.getElementById('calculator-modal').classList.remove('active'); }
-    function calcAppend(val) { calcExpression += val; document.getElementById('calc-display').value = calcExpression; }
-    function calcClear() { calcExpression = ''; document.getElementById('calc-display').value = ''; }
-    function calcBackspace() { calcExpression = calcExpression.slice(0,-1); document.getElementById('calc-display').value = calcExpression; }
-    function calcResult() { try { let res = eval(calcExpression.replace(/×/g,'*').replace(/÷/g,'/')); calcExpression = res.toString(); document.getElementById('calc-display').value = calcExpression; } catch(e) { calcExpression = ''; document.getElementById('calc-display').value = 'Erro'; } }
-
-    function openSuppliersModal() { renderSuppliersList(); document.getElementById('suppliers-modal').classList.add('active'); }
+    // Fornecedores
+    function openSuppliersModal() { renderSuppliersList(); document.getElementById('suppliers-modal').classList.add('active'); document.getElementById('supplier-search').value = ''; document.getElementById('supplier-search').oninput = () => renderSuppliersList(); }
     function closeSuppliersModal() { document.getElementById('suppliers-modal').classList.remove('active'); }
     function renderSuppliersList() {
         let container = document.getElementById('suppliers-list');
         if(!container) return;
-        if(suppliers.length === 0) { container.innerHTML = '<p class="text-gray-400 text-center">Nenhum fornecedor cadastrado.</p>'; return; }
+        let search = document.getElementById('supplier-search')?.value.toLowerCase() || '';
+        let filtered = suppliers.filter(s => s.name.toLowerCase().includes(search) || s.product.toLowerCase().includes(search));
+        if(filtered.length === 0) { container.innerHTML = '<div class="col-span-2 text-center text-gray-400 py-4">Nenhum fornecedor encontrado.</div>'; return; }
         container.innerHTML = '';
-        suppliers.forEach((s, idx) => {
+        filtered.forEach(s => {
             let div = document.createElement('div'); div.className = 'card-glass p-3 rounded-xl';
-            div.innerHTML = `<div class="flex justify-between"><div><strong>${escapeHtml(s.name)}</strong><br><span class="text-xs text-gray-400">${escapeHtml(s.contact)}</span><br><span class="text-xs">Produto: ${escapeHtml(s.product)}</span><br><span class="text-xs text-emerald-400">Preço: €${parseFloat(s.price).toFixed(2)}</span></div><button onclick="deleteSupplier(${idx})" class="text-red-400 text-sm"><i class="fas fa-trash"></i></button></div>`;
+            div.innerHTML = `<div class="flex justify-between items-start"><div><strong class="text-emerald-400">${escapeHtml(s.name)}</strong><br><span class="text-xs text-gray-400">${escapeHtml(s.contact)}</span><br><span class="text-xs">📦 ${escapeHtml(s.product)}</span><br><span class="text-xs text-emerald-400">💰 €${s.price.toFixed(2)}</span></div><button onclick="deleteSupplier(${s.id})" class="text-red-400 text-sm"><i class="fas fa-trash"></i></button></div>`;
             container.appendChild(div);
         });
     }
@@ -618,135 +562,125 @@
         let price = parseFloat(document.getElementById('supplier-price').value);
         if(isNaN(price)) price = 0;
         if(!name) return;
-        let newId = Date.now();
+        let newId = Date.now() + Math.random()*1000;
         suppliers.push({ id: newId, name, contact, product, price });
         persistData();
-        document.getElementById('supplier-name').value = '';
-        document.getElementById('supplier-contact').value = '';
-        document.getElementById('supplier-product').value = '';
-        document.getElementById('supplier-price').value = '';
+        document.getElementById('supplier-name').value = ''; document.getElementById('supplier-contact').value = ''; document.getElementById('supplier-product').value = ''; document.getElementById('supplier-price').value = '';
         renderSuppliersList();
     }
-    function deleteSupplier(idx) { suppliers.splice(idx,1); persistData(); renderSuppliersList(); }
+    function deleteSupplier(id) { suppliers = suppliers.filter(s => s.id !== id); persistData(); renderSuppliersList(); render(); }
 
+    function openSupplierSelectModal(catId, itemName, currentSupplierId) {
+        let options = '<option value="">Nenhum</option>';
+        suppliers.forEach(s => { options += `<option value="${s.id}" ${currentSupplierId === s.id ? 'selected' : ''}>${escapeHtml(s.name)} (€${s.price.toFixed(2)})</option>`; });
+        document.getElementById('modal-title').innerText = '🔗 Associar Fornecedor';
+        document.getElementById('modal-content').innerHTML = `<select id="supplier-select" class="w-full h-14 bg-black/40 border border-white/15 px-5 rounded-xl text-white">${options}</select>`;
+        document.getElementById('modal-confirm').onclick = () => { let selected = document.getElementById('supplier-select').value; updateSupplier(catId, itemName, selected === "" ? null : parseInt(selected)); closeModal(); };
+        openModal();
+    }
+
+    function confirmClearPrices() { 
+        document.getElementById('modal-title').innerText = '🧹 Zerar Custos e Quantidades'; 
+        document.getElementById('modal-content').innerHTML = `<div class="text-center"><i class="fas fa-broom-ball text-3xl text-amber-400"></i><p class="text-sm mt-2">Zerar todos os custos e quantidades?</p><p class="text-xs text-gray-400 mt-1">Esta ação não afeta fornecedores nem categorias.</p></div>`; 
+        document.getElementById('modal-confirm').onclick = () => { inventory.forEach(cat => cat.items.forEach(item => { item.costPrice=0; item.quantity=0; })); persistData(); render(); closeModal(); }; 
+        openModal(); 
+    }
+    function confirmFullReset() { 
+        document.getElementById('modal-title').innerText = '⚠️ RESET COMPLETO (FÁBRICA)'; 
+        document.getElementById('modal-content').innerHTML = `<div class="text-center"><i class="fas fa-database text-3xl text-red-500"></i><p class="text-sm mt-2 font-bold">Restaurar configurações originais?</p><p class="text-xs text-gray-400">Todos os dados serão perdidos: categorias, itens, custos, quantidades, fornecedores e notas.</p></div>`; 
+        document.getElementById('modal-confirm').onclick = () => { inventory = convertToFullFormat(DEFAULT_CATEGORIES_RAW); suppliers = []; document.getElementById('notes').value = ''; localStorage.setItem('smash_notes_prices', ''); persistData(); render(); closeModal(); }; 
+        openModal(); 
+    }
+    function openModal() { document.getElementById('modal-container').classList.add('active'); }
+    function closeModal() { document.getElementById('modal-container').classList.remove('active'); }
+    function openCategoryModal(catId = null) { const category = catId ? inventory.find(c => c.id === catId) : null; document.getElementById('modal-title').innerText = catId ? '✏️ Editar Categoria' : '➕ Nova Categoria'; document.getElementById('modal-content').innerHTML = `<input type="text" id="modal-input" value="${category ? escapeHtml(category.name) : ''}" class="w-full h-14 bg-black/40 border border-white/15 px-5 rounded-xl text-white" placeholder="Nome da categoria">`; document.getElementById('modal-confirm').onclick = () => { let newName = document.getElementById('modal-input').value.trim(); if(!newName) return; if(catId) category.name = newName; else inventory.push({ id: Date.now(), name: newName, visible: true, items: [{ name: "Produto 1", visible: true, costPrice:0, quantity:0, supplierId:null }] }); persistData(); closeModal(); render(); }; openModal(); }
+    function openItemModal(catId, oldItemName = null) { const category = inventory.find(c => c.id === catId); if(!category) return; const isEditing = (oldItemName !== null); document.getElementById('modal-title').innerText = isEditing ? '✏️ Renomear Item' : '✨ Adicionar Item'; document.getElementById('modal-content').innerHTML = `<input type="text" id="modal-input" value="${isEditing ? escapeHtml(oldItemName) : ''}" class="w-full h-14 bg-black/40 border border-white/15 px-5 rounded-xl text-white" placeholder="Nome do item">`; document.getElementById('modal-confirm').onclick = () => { let newName = document.getElementById('modal-input').value.trim(); if(!newName) return; if(isEditing) { let item = category.items.find(i => i.name === oldItemName); if(item) item.name = newName; } else { if(!category.items.some(i => i.name === newName)) category.items.push({ name: newName, visible: true, costPrice:0, quantity:0, supplierId:null }); } persistData(); closeModal(); render(); }; openModal(); }
+    function confirmDeleteCategory(catId) { let cat = inventory.find(c => c.id === catId); document.getElementById('modal-title').innerText = '⚠️ Apagar Categoria'; document.getElementById('modal-content').innerHTML = `<p>Remover <strong>${escapeHtml(cat.name)}</strong>? Todos os itens serão perdidos.</p>`; document.getElementById('modal-confirm').onclick = () => { inventory = inventory.filter(c => c.id !== catId); persistData(); closeModal(); render(); }; openModal(); }
+    function confirmDeleteItem(catId, itemName) { document.getElementById('modal-title').innerText = '❌ Remover Item'; document.getElementById('modal-content').innerHTML = `<p>Excluir <strong>${escapeHtml(itemName)}</strong>?</p>`; document.getElementById('modal-confirm').onclick = () => { let category = inventory.find(c => c.id === catId); if(category) { category.items = category.items.filter(i => i.name !== itemName); persistData(); } closeModal(); render(); }; openModal(); }
+
+    // Calculadora
+    let calcExpression = '0';
+    function updateCalcDisplay() { document.getElementById('calc-display').innerText = calcExpression; }
+    function calcAppend(val) { if(calcExpression === '0' && !isNaN(val) && val !== '.') calcExpression = val; else calcExpression += val; if(calcExpression.length>30) calcExpression = calcExpression.slice(0,30); updateCalcDisplay(); }
+    function calcClear() { calcExpression = '0'; updateCalcDisplay(); }
+    function calcBackspace() { if(calcExpression.length === 1) calcExpression = '0'; else calcExpression = calcExpression.slice(0,-1); if(calcExpression === '') calcExpression = '0'; updateCalcDisplay(); }
+    function calcResult() { try { let expr = calcExpression.replace(/×/g,'*').replace(/÷/g,'/'); let res = eval(expr); if(typeof res === 'number') res = parseFloat(res.toFixed(8)); calcExpression = String(res); updateCalcDisplay(); } catch(e) { calcExpression = 'Erro'; updateCalcDisplay(); setTimeout(() => { if(calcExpression === 'Erro') { calcExpression = '0'; updateCalcDisplay(); } }, 1200); } }
+    function openCalculator() { document.getElementById('calculator-modal').classList.add('active'); }
+    function closeCalculator() { document.getElementById('calculator-modal').classList.remove('active'); }
+    function pasteToLastPrice() { if(lastEditedField && document.activeElement && document.activeElement.classList.contains('price-input')) { document.activeElement.value = calcExpression; document.activeElement.dispatchEvent(new Event('change')); } else alert('Clique em um campo de custo antes de colar.'); }
+
+    // Relatório resumo
     function sendWhatsAppReport() {
         const notes = document.getElementById('notes').value;
         const now = new Date();
-        const formattedDate = now.toLocaleDateString('pt-PT');
-        const formattedTime = now.toLocaleTimeString('pt-PT', { hour:'2-digit', minute:'2-digit' });
-        let message = `💰 *SMASH IT - RESUMO DE GESTÃO* 💰\n📅 ${formattedDate}  ⏰ ${formattedTime}\n━━━━━━━━━━━━━━━━━━━━\n`;
+        let message = `💰 *SMASH IT - RESUMO DE CUSTOS* 💰\n📅 ${now.toLocaleDateString('pt-PT')} ⏰ ${now.toLocaleTimeString('pt-PT')}\n━━━━━━━━━━━━━━━━━━━━\n`;
         inventory.forEach(cat => {
             if (!cat.visible) return;
             let catSection = `\n*${cat.name.toUpperCase()}*\n`;
             let hasVisible = false;
             cat.items.forEach(item => {
                 if (!item.visible) return;
-                catSection += `▸ ${item.name}\n   📦 Qtd: ${item.quantity}  |  💸 Custo: €${item.costPrice.toFixed(2)}  |  🏷️ Venda: €${item.salePrice.toFixed(2)}  |  📈 Margem: ${calculateMargin(item.costPrice,item.salePrice).toFixed(1)}%\n`;
+                catSection += `▸ ${item.name}\n   📦 Qtd: ${item.quantity}  |  💰 Custo: €${item.costPrice.toFixed(2)}  |  🏭 Fornecedor: ${getSupplierName(item.supplierId)}\n`;
                 hasVisible = true;
             });
             if(hasVisible) message += catSection + `\n`;
         });
         if(notes.trim()) message += `\n📌 *OBSERVAÇÕES:*\n${notes.trim()}\n`;
-        if(suppliers.length) { 
-            message += `\n🏭 *FORNECEDORES:*\n`; 
-            suppliers.forEach(s => message += `• ${s.name} - ${s.contact}\n   Produto: ${s.product}  |  Preço: €${parseFloat(s.price).toFixed(2)}\n`); 
-        }
+        if(suppliers.length) { message += `\n🏭 *FORNECEDORES:*\n`; suppliers.forEach(s => message += `• ${s.name} - ${s.contact}\n   Produto: ${s.product}  |  Preço: €${s.price.toFixed(2)}\n`); }
         message += `\n🔁 Relatório gerado via Smash Gestão`;
-        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
-    }
-
-    function sendDirectorReport() {
-        const notes = document.getElementById('notes').value;
-        const now = new Date();
-        const formattedDate = now.toLocaleDateString('pt-PT');
-        const formattedTime = now.toLocaleTimeString('pt-PT', { hour:'2-digit', minute:'2-digit' });
-        let message = `📊 *SMASH IT - RELATÓRIO PARA DIRETORIA* 📊\n📅 ${formattedDate}  ⏰ ${formattedTime}\n━━━━━━━━━━━━━━━━━━━━\n`;
-        message += `\n📌 *LEVANTAMENTO DE PREÇOS POR FORNECEDOR*\n`;
-        let supplierItems = new Map();
-        inventory.forEach(cat => {
-            if (!cat.visible) return;
-            cat.items.forEach(item => {
-                if (!item.visible) return;
-                let supId = item.supplierId;
-                if (supId) {
-                    let sup = suppliers.find(s => s.id === supId);
-                    if (sup) {
-                        if (!supplierItems.has(supId)) supplierItems.set(supId, { name: sup.name, contact: sup.contact, items: [] });
-                        supplierItems.get(supId).items.push({ catName: cat.name, itemName: item.name, costPrice: item.costPrice, salePrice: item.salePrice, quantity: item.quantity, supplierPrice: sup.price });
-                    }
-                }
-            });
-        });
-        if (supplierItems.size === 0) message += `\n⚠️ Nenhum item associado a fornecedores. Utilize a opção "Associar" ao lado de "Não associado" para vincular produtos.\n`;
-        else for (let [supId, data] of supplierItems.entries()) {
-            message += `\n🏭 *${data.name.toUpperCase()}* (${data.contact})\n`;
-            data.items.forEach(it => { let margin = calculateMargin(it.costPrice, it.salePrice); message += `▸ ${it.itemName} (${it.catName})\n   📦 Qtd: ${it.quantity}  |  Custo: €${it.costPrice.toFixed(2)}  |  Venda: €${it.salePrice.toFixed(2)}  |  Margem: ${margin.toFixed(1)}%\n   🔹 Preço fornecedor: €${it.supplierPrice.toFixed(2)}\n`; });
-        }
-        let itemsWithoutSupplier = [];
-        inventory.forEach(cat => { if (!cat.visible) return; cat.items.forEach(item => { if (item.visible && !item.supplierId) itemsWithoutSupplier.push(`${item.name} (${cat.name})`); }); });
-        if (itemsWithoutSupplier.length > 0) { message += `\n⚠️ *ITENS SEM FORNECEDOR ASSOCIADO:*\n`; itemsWithoutSupplier.forEach(i => message += `• ${i}\n`); }
-        if (notes.trim()) message += `\n📌 *OBSERVAÇÕES:*\n${notes.trim()}\n`;
-        message += `\n🔁 Relatório gerado via Smash Gestão - Diretoria`;
         window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
     }
 
     async function generateAndSendPDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        let y = 20;
-        doc.setFontSize(18); doc.setTextColor(16,185,129); doc.text("SMASH IT - RELATÓRIO DE GESTÃO", 20, y); y+=10;
-        doc.setFontSize(10); doc.setTextColor(100);
-        doc.text(`Data: ${new Date().toLocaleString('pt-PT')}`, 20, y); y+=8;
-        doc.setFontSize(12); doc.setTextColor(16,185,129); doc.text("PRODUTOS", 20, y); y+=6;
+        doc.setFontSize(18); doc.setTextColor(16,185,129); doc.text("SMASH IT - RELATÓRIO DE CUSTOS", 20, 20);
+        doc.setFontSize(10); doc.setTextColor(100); doc.text(`Gerado em: ${new Date().toLocaleString('pt-PT')}`, 20, 30);
+        let tableData = [];
         inventory.forEach(cat => {
             if(!cat.visible) return;
-            let visibleItems = cat.items.filter(i => i.visible);
-            if(visibleItems.length === 0) return;
-            if(y > 260) { doc.addPage(); y=20; }
-            doc.setFontSize(10); doc.setTextColor(0);
-            doc.text(cat.name, 20, y); y+=4;
-            visibleItems.forEach(item => {
-                let margin = calculateMargin(item.costPrice, item.salePrice).toFixed(1);
-                let line = `${item.name} | Qtd:${item.quantity} | Custo:€${item.costPrice.toFixed(2)} | Venda:€${item.salePrice.toFixed(2)} | Margem:${margin}% | Forn:${getSupplierName(item.supplierId)}`;
-                let split = doc.splitTextToSize(line, 170);
-                if(y+split.length*5 > 280) { doc.addPage(); y=20; }
-                doc.text(split, 22, y); y += split.length*5;
+            cat.items.forEach(item => {
+                if(!item.visible) return;
+                tableData.push([cat.name, item.name, item.quantity, `€${item.costPrice.toFixed(2)}`, getSupplierName(item.supplierId)]);
             });
-            y+=2;
         });
-        if(suppliers.length) { 
-            if(y+20>280){doc.addPage(); y=20;} 
-            doc.setFontSize(12); doc.setTextColor(16,185,129); doc.text("FORNECEDORES",20,y); y+=6;
-            suppliers.forEach(s => { let line = `${s.name} - ${s.contact} | Produto: ${s.product} | Preço: €${parseFloat(s.price).toFixed(2)}`; let split = doc.splitTextToSize(line, 170); if(y+split.length*5 > 280) { doc.addPage(); y=20; } doc.text(split, 22, y); y += split.length*5; }); 
+        doc.autoTable({ head: [['Categoria', 'Item', 'Quantidade', 'Custo Unitário', 'Fornecedor']], body: tableData, startY: 40, theme: 'striped', headStyles: { fillColor: [16,185,129] }, styles: { fontSize: 8, cellPadding: 3 } });
+        if(suppliers.length) {
+            let supData = suppliers.map(s => [s.name, s.contact, s.product, `€${s.price.toFixed(2)}`]);
+            doc.addPage(); doc.setFontSize(14); doc.setTextColor(16,185,129); doc.text("FORNECEDORES", 20, 20);
+            doc.autoTable({ head: [['Nome', 'Contato', 'Produto', 'Preço']], body: supData, startY: 30, theme: 'striped', headStyles: { fillColor: [16,185,129] }, styles: { fontSize: 8 } });
         }
         const notes = document.getElementById('notes').value;
-        if(notes) { if(y+20>280){doc.addPage(); y=20;} doc.setFontSize(10); doc.setTextColor(100); doc.text("Observações:",20,y); y+=6; doc.text(notes,20,y); }
-        const pdfBlob = doc.output('blob');
-        const url = URL.createObjectURL(pdfBlob);
-        const a = document.createElement('a'); a.href = url; a.download = `relatorio_smash_${Date.now()}.pdf`; document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        if(confirm("PDF gerado com sucesso! Deseja abrir o WhatsApp para enviar o arquivo manualmente?")) window.open('https://wa.me/', '_blank');
+        if(notes) { doc.addPage(); doc.setFontSize(12); doc.text("Observações:", 20, 20); doc.setFontSize(10); doc.text(notes, 20, 30); }
+        doc.save(`relatorio_smash_custos_${Date.now()}.pdf`);
+        if(confirm("PDF gerado! Deseja abrir o WhatsApp para compartilhar?")) window.open('https://wa.me/', '_blank');
     }
 
-    function toggleTheme() { document.body.classList.toggle('light-theme'); let icon=document.getElementById('theme-icon'); let isLight=document.body.classList.contains('light-theme'); icon.className=isLight?'fas fa-sun text-base':'fas fa-moon text-base'; localStorage.setItem('smash_theme_prices',isLight?'light':'dark'); }
+    function exportData() { const exportObj = { inventory, suppliers, notes: document.getElementById('notes').value, version: '1.0' }; const dataStr = JSON.stringify(exportObj, null, 2); const blob = new Blob([dataStr], {type: 'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `smash_data_${new Date().toISOString().slice(0,19)}.json`; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }
+    function importData() { const input = document.createElement('input'); input.type = 'file'; input.accept = 'application/json'; input.onchange = (e) => { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (ev) => { try { const imported = JSON.parse(ev.target.result); if (imported.inventory && imported.suppliers !== undefined) { inventory = convertToFullFormat(imported.inventory); suppliers = imported.suppliers; if (imported.notes !== undefined) document.getElementById('notes').value = imported.notes; persistData(); render(); alert('Dados importados com sucesso!'); location.reload(); } else { alert('Arquivo inválido.'); } } catch(err) { alert('Erro ao ler o arquivo: ' + err.message); } }; reader.readAsText(file); }; input.click(); }
+    function toggleTheme() { document.body.classList.toggle('light-theme'); let icon=document.getElementById('theme-icon'); let isLight=document.body.classList.contains('light-theme'); icon.className=isLight?'fas fa-sun text-base':'fas fa-moon text-base'; localStorage.setItem('smash_theme_prices',isLight?'light':'dark'); updateHiddenNotification(); }
     function loadTheme() { let saved=localStorage.getItem('smash_theme_prices'); if(saved==='light'){ document.body.classList.add('light-theme'); document.getElementById('theme-icon').className='fas fa-sun text-base'; } }
+    function switchToCounterApp() { window.location.href = "https://dev-ronaldo-alves.github.io/smash-it-pro-contagem/"; }
 
-    function switchToCounterApp() {
-        window.location.href = "https://dev-ronaldo-alves.github.io/smash-it-pro-contagem/";
-    }
+    // --- Preloader com duração mínima de 3 segundos ---
+    window.addEventListener('load', function() {
+        const preloader = document.getElementById('preloader');
+        if (preloader) {
+            const startTime = performance.now();
+            const remaining = () => Math.max(0, 3000 - (performance.now() - startTime));
+            const hide = () => {
+                preloader.style.opacity = '0';
+                setTimeout(() => { preloader.style.display = 'none'; }, 600);
+            };
+            const delay = remaining();
+            if (delay <= 0) hide();
+            else setTimeout(hide, delay);
+        }
+    });
 
     loadData(); loadTheme(); loadNotes();
     window.onload = () => { render(); };
     window.addEventListener('storage', (e) => { if(e.key==='smash_prices_full' || e.key==='smash_suppliers'){ loadData(); render(); } });
 </script>
-
-<!-- Modal genérico -->
-<div id="modal-container" class="modal px-5">
-    <div class="card-glass p-6 rounded-[2.5rem] w-full max-w-sm border border-emerald-500/30">
-        <div class="text-center mb-2"><h3 id="modal-title" class="text-2xl font-black text-emerald-500 brand-font">Ação</h3><div class="w-12 h-0.5 bg-emerald-500/50 mx-auto mt-1"></div></div>
-        <div id="modal-content" class="space-y-5 my-4"></div>
-        <div class="flex gap-3 mt-4"><button onclick="closeModal()" class="flex-1 h-12 bg-white/10 rounded-xl font-bold text-gray-300 text-xs">Cancelar</button><button id="modal-confirm" class="flex-1 btn-primary h-12 rounded-xl font-bold text-xs">Confirmar</button></div>
-    </div>
-</div>
 </body>
 </html>
